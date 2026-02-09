@@ -90,28 +90,25 @@
         }
 
         #status { 
-            margin: 15px 0; 
+            margin: 15px 0 5px 0; 
             color: #888; 
-            font-size: 0.9em; 
+            font-size: 1em; 
             min-height: 20px;
-            line-height: 1.6;
         }
 
-        /* Highlight box for instructions */
-        .instruction-box {
-            background-color: #2a2a2a;
-            border-left: 4px solid #FFD700; /* Gold color */
-            color: #ddd;
-            padding: 15px;
-            margin: 20px auto;
-            text-align: left;
+        /* Clean Instruction Text (No Box) */
+        .instruction-text {
+            color: #777;
+            margin: 10px auto;
             font-size: 0.9em;
-            width: fit-content;
+            line-height: 1.5;
             display: none; /* Hidden by default */
+            max-width: 600px;
         }
         
         .highlight-green { color: #4CAF50; font-weight: bold; }
-        .highlight-yellow { color: #FFD700; font-weight: bold; }
+        .highlight-white { color: #ddd; font-weight: bold; }
+        .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
 
         canvas { 
             max-width: 100%; 
@@ -136,7 +133,7 @@
     
     <div id="status">Waiting for file...</div>
 
-    <div id="instructionBox" class="instruction-box"></div>
+    <div id="instructionText" class="instruction-text"></div>
 
     <div class="hidden">
         <img id="tempImg" rel:auto_play="0" />
@@ -153,7 +150,7 @@
 <script>
     const fileInput = document.getElementById('gifInput');
     const statusDiv = document.getElementById('status');
-    const instructionBox = document.getElementById('instructionBox');
+    const instructionText = document.getElementById('instructionText');
     const tempImg = document.getElementById('tempImg');
     const outputCanvas = document.getElementById('outputCanvas');
     const btn1024 = document.getElementById('btn1024');
@@ -168,7 +165,7 @@
 
         // Reset UI
         statusDiv.innerText = "Loading GIF...";
-        instructionBox.style.display = 'none';
+        instructionText.style.display = 'none';
         btn1024.disabled = true;
         btn2048.disabled = true;
         outputCanvas.height = 0;
@@ -211,14 +208,13 @@
         // Update UI
         statusDiv.innerHTML = `<span class="highlight-green">✔ Processing Complete!</span><br>Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
         
-        // Show Instruction Box
-        instructionBox.style.display = 'inline-block';
-        instructionBox.innerHTML = `
-            <span class="highlight-yellow">⚠ IMPORTANT:</span><br>
-            The file will be saved as <strong>YOURGIFNAME${suffixExample}.png</strong><br><br>
-            You can rename "YOURGIFNAME" to anything you want, but<br>
-            <strong>YOU MUST KEEP THE NUMBERS AT THE END</strong> (${suffixExample})<br>
-            for the script to work correctly.
+        // Show Clean Instructions
+        instructionText.style.display = 'block';
+        instructionText.innerHTML = `
+            File will be saved as: <span class="file-name-style">YOURGIFNAME${suffixExample}.png</span><br>
+            <span style="font-size: 0.85em; opacity: 0.8;">
+            (You can rename "YOURGIFNAME", but keep the numbers at the end).
+            </span>
         `;
 
         // Draw Canvas
