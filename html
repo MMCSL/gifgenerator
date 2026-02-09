@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMC - Gif Generator</title>
+    <script src="https://cdn.jsdelivr.net/gh/buzzfeed/libgif-js@master/libgif.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #111; 
+            color: #eee; 
+            text-align: center; 
+            padding: 40px; 
+            margin: 0;
+        }
+
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: #1a1a1a; 
+            padding: 30px; 
+            border-radius: 8px; 
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+        }
+
+        h1 { 
+            margin-top: 0; 
+            font-weight: 300; 
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #fff;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+
+        /* File Input Styling */
+        input[type=file] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            border: 1px solid #444;
+            display: inline-block;
+            padding: 12px 24px;
+            cursor: pointer;
+            background-color: #222;
+            color: #fff;
+            border-radius: 4px;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #333;
+            border-color: #666;
+        }
+
+        /* Button Styling */
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button { 
+            background-color: #000; 
+            color: white; 
+            padding: 15px 30px; 
+            border: 1px solid #444; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            width: 200px;
+        }
+
+        button:hover:not(:disabled) { 
+            background-color: #fff; 
+            color: #000;
+        }
+
+        button:disabled { 
+            background-color: #222; 
+            color: #555; 
+            border-color: #333;
+            cursor: not-allowed; 
+        }
+
+        #status { 
+            margin: 15px 0; 
+            color: #888; 
+            font-size: 0.9em; 
+            white-space: pre-wrap; 
+            min-height: 20px;
+        }
+
+        canvas { 
+            max-width: 100%; 
+            border: 1px solid #333; 
+            margin-top: 20px; 
+            background-color: #000; 
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>MMC - Gif Generator</h1>
+    <p style="color: #666;">Convert animated GIFs into SL Texture Atlases.</p>
+    
+    <label for="gifInput" class="custom-file-upload">
+        Select GIF File
+    </label>
+    <input type="file" id="gifInput" accept="image/gif">
+    
+    <div id="status">Waiting for file...</div>
+
+    <div class="hidden">
+        <img id="tempImg" rel:auto_play="0" />
+    </div>
+
+    <canvas id="outputCanvas"></canvas>
+    
+    <div class="btn-group">
+        <button id="btn1024" disabled>Download<br>1024 x 1024</button>
+        <button id="btn2048" disabled>Download<br>2048 x 2048</button>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('gifInput');
+    const statusDiv = document.getElementById('status');
+    const tempImg = document.getElementById('tempImg');
+    const outputCanvas = document.getElementById('outputCanvas');
+    const btn1024 = document.getElementById('btn1024');
+    const btn2048 = document.getElementById('btn2048');
+    
+    let superGif = null;
+    let originalFileName = "animation";
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Reset UI
+        originalFileName = file.name.split('.')[0];
+        statusDiv.innerText = "Loading GIF...";
+        btn1024.disabled = true;
+        btn2048.disabled = true;
+        outputCanvas.height = 0; // Collapse canvas
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const parent = tempImg.parentElement;
+            parent.innerHTML = ''; 
+            const newImg = document.createElement('img');
+            newImg.src = event.target.result;
+            newImg.setAttribute('rel:auto_play', '0');
+            parent.appendChild(newImg);
+
+            superGif = new SuperGif({ gif: newImg } );
+            superGif.load(function() {
+                processGif();
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+
+    function processGif() {
+        const len = superGif.get_length();
+        const width = superGif.get_canvas().width;
+        const height = superGif.get_canvas().height;
+        
+        // Calculate Grid
+        const cols = Math.ceil(Math.sqrt(len));
+        const rows = Math.ceil(len / cols);
+
+        statusDiv.innerText = `Processing: ${len} frames detected.`;
+
+        // Configure Master Canvas (Full Resolution)
+        outputCanvas.width = cols * width;
+        outputCanvas.height = rows * height;
+        const ctx = outputCanvas.getContext('2d');
+        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+        // Draw frames
+        for (let i = 0; i < len; i++) {
+            superGif.move_to(i);
+            const frameCanvas = superGif.get_canvas();
+            
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const x = col * width;
+            const y = row * height;
+            
+            ctx.drawImage(frameCanvas, x, y);
+        }
+
+        // Show Completion status only
+        statusDiv.innerText = "Conversion Complete.";
+
+        // Enable Buttons
+        btn1024.disabled = false;
+        btn2048.disabled = false;
+
+        // Button Actions
+        btn1024.onclick = () => downloadResized(1024);
+        btn2048.onclick = () => downloadResized(2048);
+    }
+
+    function downloadResized(size) {
+        // Create a temporary canvas to resize the image
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = size;
+        tempCanvas.height = size;
+        const tCtx = tempCanvas.getContext('2d');
+
+        // Draw the main canvas onto the resized canvas
+        tCtx.drawImage(outputCanvas, 0, 0, outputCanvas.width, outputCanvas.height, 0, 0, size, size);
+
+        // Trigger Download
+        const link = document.createElement('a');
+        link.download = `MMC_${originalFileName}_${size}.png`;
+        link.href = tempCanvas.toDataURL("image/png");
+        link.click();
+    }
+</script>
+
+</body>
+</html>
