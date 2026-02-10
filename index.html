@@ -1,413 +1,190 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMC - SL Gif Creator</title>
-    
-    <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
+    <title>G2SLA - Versão Robusta</title>
     <style>
-        /* --- ESTILO MMC CLASSIC (DARK) --- */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #111; color: #eee; text-align: center; 
-            padding: 20px; margin: 0; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
-        }
-
-        #lockedScreen {
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            height: 80vh; text-align: center; color: #d9534f;
-        }
-        .lock-screen-gif { max-width: 150px; margin-bottom: 20px; border-radius: 5px; }
-        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        #lockedScreen p { color: #888; font-size: 1.1em; }
-        #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; border: 1px solid #333; padding: 10px; background: #1a1a1a; }
-
-        #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
-
-        .main-container { 
-            width: 100%; max-width: 900px; background: #1a1a1a; 
-            padding: 30px; border-radius: 8px; border: 1px solid #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-height: 500px;
-            margin-bottom: 40px; 
-        }
-
-        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
-        .header-credits { font-size: 0.85em; color: #888; margin-bottom: 30px; }
-        .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; transition: 0.3s; }
-        .header-credits a:hover { color: #4a90e2; border-color: #4a90e2; }
-
-        input[type=file] { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
-        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 15px 30px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-        .custom-file-upload:hover { background-color: #333; border-color: #666; }
-
-        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; }
-        button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
-        button.action-btn:disabled { background-color: #222; color: #555; cursor: not-allowed; border-color: #333; }
-
-        .controls-panel {
-            background: #222; border: 1px solid #444; border-radius: 6px;
-            padding: 20px; margin-bottom: 20px; width: 100%; max-width: 500px;
-            display: flex; flex-direction: column; gap: 15px;
-        }
-
-        .control-group { text-align: left; }
-        .control-group label { font-size: 0.8em; color: #aaa; margin-bottom: 5px; display: block; }
-        
-        .res-select {
-            background-color: #333; color: #fff; padding: 10px; 
-            border: 1px solid #555; border-radius: 4px; 
-            font-size: 13px; cursor: pointer; width: 100%;
-        }
-
-        .bg-option { display: flex; align-items: center; font-size: 0.85em; color: #bbb; cursor: pointer; margin-bottom: 5px; }
-        .bg-option input { margin-right: 10px; cursor: pointer; transform: scale(1.2); }
-
-        .grid-info-text { font-family: monospace; color: #4CAF50; font-size: 0.9em; margin-top: 2px; }
-
-        #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
-        #placeholderContainer img { max-width: 150px; border: 1px solid #333; }
-        
-        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background: transparent; }
-        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; flex-direction: column; align-items: center; }
-        
-        .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
-        .highlight-success { color: #eee; font-weight: bold; } 
-        
-        .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
-        .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
-        
-        .filename-warning {
-            font-size: 0.75em; color: #d9534f; margin-bottom: 20px; max-width: 450px; line-height: 1.4em; background: rgba(217, 83, 79, 0.1); padding: 10px; border-radius: 4px;
-        }
+        body { font-family: sans-serif; background: #222; color: #fff; text-align: center; padding: 20px; }
+        .box { background: #333; max-width: 500px; margin: auto; padding: 20px; border-radius: 10px; border: 1px solid #555; }
+        #preview { max-width: 150px; display: none; margin: 10px auto; border: 1px solid #777; }
+        .log { background: #000; color: #0f0; padding: 10px; font-size: 12px; text-align: left; margin-top: 10px; border-radius: 5px; height: 100px; overflow-y: auto; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; margin-top: 10px; width: 100%; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .error-help { color: #ff6b6b; font-size: 13px; margin-top: 10px; display: none; border: 1px solid #ff6b6b; padding: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="lockedScreen">
-        <img src="ERROR.gif" alt="Access Denied" class="lock-screen-gif">
-        <h2>Access Denied</h2>
-        <p>You need to use your in-world HUD to generate your access link.</p>
-        <div id="lockReason">Checking security...</div>
-    </div>
-
-    <div id="appContent">
-        <div class="main-container">
-            <h1>MMC - SL Gif Creator</h1>
-  
-            <div class="header-credits">
-                Created by Saori Suki. You need the script for the gif to work. <a href="https://marketplace.secondlife.com/stores/269743" target="_blank">Buy here.</a>
-            </div>
-
-            <p style="color: #666;">Convert your GIF to TEXTURE below.</p>
-            
-            <label for="gifInput" class="custom-file-upload">Select GIF File</label>
-            <input type="file" id="gifInput" accept="image/gif">
-
-            <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar"></div></div>
-            <div id="gifStatus" class="status-msg">Waiting for file...</div>
+<div class="box">
+    <h2>G2SLA - Conversor</h2>
+    <input type="file" id="gifInput" accept="image/gif">
+    <br>
+    <img id="preview">
     
-            <div id="placeholderContainer">
-                <img id="previewImg" src="bobonchik-spin-sp.gif" alt="Welcome">
-            </div>
-            
-            <canvas id="outputCanvas"></canvas>
-            
-            <div id="gifResultsArea">
-                
-                <div class="controls-panel">
-                    
-                    <div class="control-group">
-                        <label>Texture Quality / Cost:</label>
-                        <select id="resSelect" class="res-select">
-                            <option value="1024" selected>1024px (Standard) 10L$ Upload</option>
-                            <option value="2048">2048px (High / Big Frames) 50L$ Upload</option>
-                        </select>
-                    </div>
-
-                    <div class="control-group">
-                        <label>Rendering Logic (Fix Glitches):</label>
-                        <select id="renderModeSelect" class="res-select" onchange="reprocessFile()">
-                            <option value="raw" selected>Raw (GDI+ Clone) - Sharpest</option>
-                            <option value="cumulative">Browser Default (Smoothed)</option>
-                        </select>
-                    </div>
-
-                    <div class="control-group">
-                        <label>Options:</label>
-                        <label class="bg-option" title="Uncheck to make background black (Fixes SL Ghosting)">
-                            <input type="checkbox" id="transparentChkbox" checked> 
-                            Transparency (PNG) 
-                            <span style="font-size:0.8em; color:#666; margin-left: 5px;">(Uncheck to fix ghosting)</span>
-                        </label>
-                    </div>
-
-                    <div class="control-group" style="border-top: 1px solid #333; padding-top: 10px;">
-                        <label>Auto-Calculated Grid:</label>
-                        <div id="gridInfoDisplay" class="grid-info-text">Waiting...</div>
-                    </div>
-
-                </div>
-
-                <div class="filename-warning">
-                    ⚠️ <b>IMPORTANT:</b> Do not rename the downloaded file.<br>
-                    The numbers at the end (.anim;X;Y;10) are required for the script.
-                </div>
-
-                <button id="btnDownload" class="action-btn" disabled>Download Texture</button>
-                <button class="action-btn" onclick="location.reload()" style="background: #222; width: 150px; margin-top: 5px;">Start Over</button>
-            </div>
-        </div>
+    <div id="info" style="margin: 15px 0; font-size: 14px; color: #ddd;">
+        Selecione um GIF para começar
     </div>
+
+    <label><input type="checkbox" id="transparentChk" checked> Transparência</label>
+    <br>
+    <button id="outputBtn" disabled>BAIXAR TEXTURA</button>
+    
+    <div class="log" id="statusLog">Aguardando...</div>
+    
+    <div id="errorHelp" class="error-help">
+        <strong>ERRO CRÍTICO:</strong> O script não carregou.<br>
+        1. Baixe este arquivo: <a href="https://unpkg.com/omggif@1.0.10/omggif.js" target="_blank" style="color: #fff;">omggif.js</a><br>
+        2. Salve na mesma pasta que este html.<br>
+        3. Recarregue a página.
+    </div>
+</div>
+
+<script src="https://unpkg.com/omggif@1.0.10/omggif.js"></script>
+<script src="omggif.js"></script> 
 
 <script>
-    // ==========================================
-    // 1. SEGURANÇA
-    // ==========================================
-    const SECRET_KEY = "MMC_SAORI_SECRET_2026";
-    const LINK_EXPIRATION_MINUTES = 2; 
-
-    function checkAccess() {
-        const params = new URLSearchParams(window.location.search);
-        const userUUID = params.get('id');
-        const urlToken = params.get('token');
-        const timestamp = params.get('ts'); 
-        
-        const lockReason = document.getElementById('lockReason');
-        const lockedScreen = document.getElementById('lockedScreen');
-        const appContent = document.getElementById('appContent');
-
-        if (!userUUID || !urlToken || !timestamp) {
-            lockReason.innerText = "Error: Invalid Link Format.";
-            return; 
-        }
-
-        const storageKey = "used_token_" + urlToken;
-        if (localStorage.getItem(storageKey)) {
-             lockReason.innerText = "Error: Link already used.";
-             return; 
-        }
-
-        const linkTime = parseInt(timestamp) * 1000;
-        const now = new Date().getTime();
-        if ((now - linkTime) / 1000 / 60 > LINK_EXPIRATION_MINUTES) {
-            lockReason.innerText = "Error: Link Expired.";
-            return; 
-        }
-
-        const stringToHash = userUUID + timestamp + SECRET_KEY + ":0";
-        const calculatedToken = CryptoJS.MD5(stringToHash).toString();
-
-        if (urlToken === calculatedToken) {
-            localStorage.setItem(storageKey, "true");
-            lockedScreen.style.display = 'none';
-            appContent.style.display = 'flex';
-        } else {
-            lockReason.innerText = "Error: Security Token Mismatch.";
-        }
-    }
-    checkAccess();
-
-    // ==========================================
-    // 2. GIF LOGIC (V14 - PIXEL PERFECT RAW)
-    // ==========================================
     const gifInput = document.getElementById('gifInput');
-    const previewImg = document.getElementById('previewImg');
-    const gifStatus = document.getElementById('gifStatus');
-    const gifProgressContainer = document.getElementById('gifProgressContainer');
-    const gifProgressBar = document.getElementById('gifProgressBar');
-    const gifResultsArea = document.getElementById('gifResultsArea');
-    
-    const resSelect = document.getElementById('resSelect');
-    const transparentChkbox = document.getElementById('transparentChkbox');
-    const renderModeSelect = document.getElementById('renderModeSelect'); 
-    const gridInfoDisplay = document.getElementById('gridInfoDisplay');
-    const btnDownload = document.getElementById('btnDownload');
-    const canvas = document.getElementById('outputCanvas');
+    const outputBtn = document.getElementById('outputBtn');
+    const statusLog = document.getElementById('statusLog');
+    const info = document.getElementById('info');
+    const preview = document.getElementById('preview');
+    const errorHelp = document.getElementById('errorHelp');
 
-    let currentFrames = [];
-    let xFrames = 0;
-    let yFrames = 0;
-    let originalName = "";
-    let finalFileName = "";
-    let lastFile = null;
-
-    gifInput.addEventListener('change', function(e) {
-        if (e.target.files[0]) {
-            lastFile = e.target.files[0];
-            processFile(lastFile);
-        }
-    });
-
-    function reprocessFile() {
-        if(lastFile) processFile(lastFile);
+    function log(msg) {
+        statusLog.innerHTML += "<div>> " + msg + "</div>";
+        statusLog.scrollTop = statusLog.scrollHeight;
     }
 
-    function processFile(file) {
-        originalName = file.name.replace(/\.[^/.]+$/, "");
-        
+    // Verifica se a biblioteca carregou
+    function checkLibrary() {
+        if (typeof Omggif === 'undefined') {
+            log("ERRO: Biblioteca Omggif não encontrada!");
+            errorHelp.style.display = "block";
+            return false;
+        }
+        return true;
+    }
+
+    gifInput.onchange = function(e) {
+        if (!checkLibrary()) return;
+
+        const file = e.target.files[0];
+        if (!file) return;
+
+        log("Lendo arquivo: " + file.name);
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        outputBtn.disabled = true;
+
         const reader = new FileReader();
-        reader.onload = function(event) { previewImg.src = event.target.result; };
-        reader.readAsDataURL(file);
+        reader.onload = function(event) {
+            try {
+                const buffer = new Uint8Array(event.target.result);
+                // Usando Omggif para ler o GIF
+                const gifReader = new Omggif.GifReader(buffer);
+                
+                const frameCount = gifReader.numFrames();
+                if (frameCount === 0) throw new Error("Sem frames.");
 
-        gifStatus.innerText = "Analyzing Frames...";
-        gifProgressContainer.style.display = 'block';
-        gifProgressBar.style.width = '10%';
-        gifResultsArea.style.display = 'none';
+                window.gifReader = gifReader; // Salva para uso posterior
+                window.safeName = file.name.replace(/\.[^/.]+$/, "");
+                
+                calculateLayout(frameCount);
+                log("GIF processado! " + frameCount + " frames.");
+                outputBtn.disabled = false;
 
-        // LÓGICA DE EXTRAÇÃO
-        let isCumulative = (renderModeSelect.value === 'cumulative');
+            } catch (err) {
+                log("ERRO: " + err.message);
+                console.error(err);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
 
-        gifFrames({ url: URL.createObjectURL(file), frames: 'all', outputType: 'canvas', cumulative: isCumulative })
-        .then(function (frames) {
-            currentFrames = frames;
-            calculateGridLogic(); 
-            
-            gifStatus.innerText = "Ready to Convert!";
-            gifProgressBar.style.width = '100%';
-            setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
-            
-            gifResultsArea.style.display = 'flex';
-            btnDownload.disabled = false;
-        });
-    }
-
-    function calculateGridLogic() {
-        let frameCount = currentFrames.length;
-        let num = Math.round(Math.sqrt(frameCount)); 
+    function calculateLayout(frameCount) {
+        let num = Math.floor(Math.sqrt(frameCount));
         let num2 = frameCount;
+        let xFrames = 0, yFrames = 0;
 
-        if (num * num == frameCount) {
-            xFrames = num;
-            yFrames = num;
+        if (num * num === frameCount) {
+            xFrames = num; yFrames = num;
         } else {
-            if (frameCount % 2 != 0) { num2++; }
-            if (num2 < 16) { xFrames = Math.floor(num2 / 2); yFrames = 2; } 
-            else if (num2 < 32) { xFrames = Math.floor(num2 / 4); yFrames = 4; } 
-            else if (num2 < 64) { xFrames = Math.floor(num2 / 8); yFrames = 8; } 
-            else { xFrames = Math.floor(num2 / 16); yFrames = 16; }
+            if (num2 % 2 !== 0) num2++;
+            if (num2 < 16) { xFrames = num2 / 2; yFrames = 2; }
+            else if (num2 < 32) { xFrames = num2 / 4; yFrames = 4; }
+            else if (num2 < 64) { xFrames = num2 / 8; yFrames = 8; }
+            else { xFrames = Math.ceil(num2 / 16); yFrames = 16; }
         }
 
-        gridInfoDisplay.innerText = `${xFrames} cols x ${yFrames} rows (${frameCount} frames)`;
-        let cleanName = originalName.replace(/[^a-zA-Z0-9-_]/g, "");
-        finalFileName = `${cleanName}.anim;${xFrames};${yFrames};10`; 
+        window.layout = { x: xFrames, y: yFrames };
+        info.innerHTML = `Frames: ${frameCount} <br> Grade: ${xFrames}x${yFrames}`;
     }
 
-    btnDownload.onclick = function() {
-        if (!currentFrames.length) return;
+    outputBtn.onclick = function() {
+        log("Gerando imagem...");
+        const reader = window.gifReader;
+        const layout = window.layout;
+        const width = reader.width;
+        const height = reader.height;
 
-        gifStatus.innerText = "Generating Texture...";
-        btnDownload.disabled = true;
-        btnDownload.innerText = "Processing...";
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
 
-        setTimeout(() => {
-            // Pega dimensões do primeiro frame (Base)
-            let baseImg = currentFrames[0].getImage();
-            let width = baseImg.width;
-            let height = baseImg.height;
+        let totalW = layout.x * width;
+        let totalH = layout.y * height;
+
+        // Limite 1024px
+        let scale = 1;
+        if (totalW > 1024 || totalH > 1024) {
+            log("Redimensionando para 1024px...");
+            scale = Math.min(1024 / totalW, 1024 / totalH);
+        }
+
+        canvas.width = Math.floor(totalW * scale);
+        canvas.height = Math.floor(totalH * scale);
+        
+        // Canvas temporário para extrair pixels brutos
+        const frameCanvas = document.createElement('canvas');
+        frameCanvas.width = width;
+        frameCanvas.height = height;
+        const frameCtx = frameCanvas.getContext('2d');
+        const frameData = frameCtx.createImageData(width, height);
+
+        // Processar cada frame
+        const numFrames = reader.numFrames();
+        const dw = Math.floor(width * scale);
+        const dh = Math.floor(height * scale);
+
+        for (let i = 0; i < numFrames; i++) {
+            // Decodifica pixels para o array
+            reader.decodeAndBlitFrameRGBA(i, frameData.data);
             
-            canvas.width = xFrames * width;
-            canvas.height = yFrames * height;
-            let ctx = canvas.getContext('2d');
+            // Coloca no canvas temporário
+            frameCtx.putImageData(frameData, 0, 0);
 
-            // --- CONFIGURAÇÃO PARA EVITAR BUGS (Raw) ---
-            if (renderModeSelect.value === 'raw') {
-                ctx.imageSmoothingEnabled = false; // Desativa antialias (Pixel Perfect)
-            } else {
-                ctx.imageSmoothingEnabled = true;
+            // Calcula posição
+            const col = i % layout.x;
+            const row = Math.floor(i / layout.x);
+
+            if (row < layout.y) {
+                // Desenha no canvas final redimensionado
+                ctx.drawImage(frameCanvas, col * dw, row * dh, dw, dh);
             }
+        }
 
-            let num2 = currentFrames.length;
-            if (num2 % 2 != 0) num2++; 
-            let num3 = 0; 
+        // Baixar
+        const isPng = document.getElementById('transparentChk').checked;
+        const ext = isPng ? ".png" : ".jpg";
+        const type = isPng ? "image/png" : "image/jpeg";
+        const filename = `${window.safeName}.anim;${layout.x};${layout.y};10${ext}`;
 
-            for (let i = 0; i < yFrames; i++) {
-                for (let j = 0; j < xFrames; j++) {
-                    let frameObj = null;
-                    if (num3 < currentFrames.length) {
-                        frameObj = currentFrames[num3];
-                    } else {
-                        frameObj = currentFrames[0]; // Padding
-                    }
-
-                    if (frameObj) {
-                        let posX = j * width;
-                        let posY = i * height;
-                        
-                        // LIMPEZA CRÍTICA: Apaga qualquer lixo anterior nessa célula
-                        // Isso resolve os "bugs" onde pedaços ficavam sujos
-                        ctx.clearRect(posX, posY, width, height);
-
-                        let imgData = frameObj.getImage();
-                        
-                        // OFFSET CORRECTION PARA MODO RAW
-                        // O C# recebe frame inteiro, mas gif-frames Raw entrega pedaços otimizados.
-                        // Usamos frameInfo para posicionar o pedaço no lugar certo.
-                        let offX = frameObj.frameInfo.x || 0;
-                        let offY = frameObj.frameInfo.y || 0;
-
-                        ctx.drawImage(imgData, posX + offX, posY + offY);
-                    }
-                    num3++;
-                }
-            }
-
-            // --- REDIMENSIONAMENTO (C# LOGIC) ---
-            let targetMax = parseInt(resSelect.value); 
-            let fullW = canvas.width;
-            let fullH = canvas.height;
-
-            let finalW = (fullW > targetMax) ? targetMax : fullW;
-            let finalH = (fullH > targetMax) ? targetMax : fullH;
-            
-            if (fullW > finalW || fullH > finalH) {
-                let tempCanvas = document.createElement('canvas');
-                let tCtx = tempCanvas.getContext('2d');
-                
-                tempCanvas.width = finalW; 
-                tempCanvas.height = finalH;
-                
-                // Qualidade Alta no Resize final
-                tCtx.imageSmoothingEnabled = true;
-                tCtx.imageSmoothingQuality = 'high';
-                tCtx.drawImage(canvas, 0, 0, finalW, finalH);
-                
-                canvas.width = finalW; 
-                canvas.height = finalH;
-                ctx.drawImage(tempCanvas, 0, 0);
-            }
-
-            // --- DOWNLOAD ---
-            const link = document.createElement('a');
-            link.download = finalFileName;
-
-            if (!transparentChkbox.checked) {
-                // JPG (Fundo Preto)
-                let compositeCanvas = document.createElement('canvas');
-                compositeCanvas.width = canvas.width;
-                compositeCanvas.height = canvas.height;
-                let cCtx = compositeCanvas.getContext('2d');
-                cCtx.fillStyle = "#000000";
-                cCtx.fillRect(0, 0, canvas.width, canvas.height);
-                cCtx.drawImage(canvas, 0, 0);
-                link.href = compositeCanvas.toDataURL("image/jpeg", 0.95);
-                link.download += ".jpg";
-            } else {
-                // PNG
-                link.href = canvas.toDataURL("image/png");
-                link.download += ".png";
-            }
-
-            link.click();
-            
-            gifStatus.innerHTML = `<span class="highlight-success">✔ Texture Downloaded!</span>`;
-            btnDownload.innerText = "Download Texture";
-            btnDownload.disabled = false;
-        }, 100);
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL(type, 0.9);
+        link.click();
+        log("Download concluído: " + filename);
     };
 </script>
+
 </body>
 </html>
