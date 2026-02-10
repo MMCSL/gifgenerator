@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMC - Gif Generator</title>
+    <title>MMC - Creator Suite</title>
+    
     <script src="https://cdn.jsdelivr.net/gh/buzzfeed/libgif-js@master/libgif.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #111; 
             color: #eee; 
             text-align: center; 
-            padding: 40px; 
+            padding: 20px; 
             margin: 0;
         }
 
-        .container { 
+        .main-container { 
             max-width: 900px; 
             margin: 0 auto; 
             background: #1a1a1a; 
@@ -23,6 +26,7 @@
             border-radius: 8px; 
             border: 1px solid #333;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+            min-height: 600px;
         }
 
         h1 { 
@@ -31,11 +35,45 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             color: #fff;
-            border-bottom: 1px solid #333;
             padding-bottom: 20px;
         }
 
-        /* File Input Styling */
+        /* --- TABS NAVIGATION --- */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #666;
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn:hover { color: #fff; }
+        
+        .tab-btn.active {
+            color: #fff;
+            border-bottom: 2px solid #4CAF50;
+            font-weight: bold;
+        }
+
+        /* --- CONTENT SECTIONS --- */
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- COMMON ELEMENTS --- */
         input[type=file] { display: none; }
 
         .custom-file-upload {
@@ -48,22 +86,12 @@
             border-radius: 4px;
             transition: all 0.3s;
             margin: 20px 0;
+            min-width: 250px;
         }
 
-        .custom-file-upload:hover {
-            background-color: #333;
-            border-color: #666;
-        }
+        .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
-        /* Button Styling */
-        .btn-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        button { 
+        button.action-btn { 
             background-color: #000; 
             color: white; 
             padding: 15px 30px; 
@@ -75,82 +103,137 @@
             letter-spacing: 1px;
             transition: all 0.3s;
             width: 200px;
+            margin: 10px;
         }
 
-        button:hover:not(:disabled) { 
-            background-color: #fff; 
-            color: #000;
-        }
+        button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000; }
+        button.action-btn:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed; }
 
-        button:disabled { 
-            background-color: #222; 
-            color: #555; 
-            border-color: #333;
-            cursor: not-allowed; 
-        }
+        .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
+        .highlight-green { color: #4CAF50; font-weight: bold; }
+        .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
 
-        #status { 
-            margin: 15px 0 5px 0; 
-            color: #888; 
-            font-size: 1em; 
-            min-height: 20px;
-        }
-
-        /* Clean Instruction Text (No Box) */
+        /* --- GIF TOOL SPECIFIC --- */
         .instruction-text {
             color: #777;
             margin: 10px auto;
             font-size: 0.9em;
             line-height: 1.5;
-            display: none; /* Hidden by default */
+            display: none;
             max-width: 600px;
         }
+        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; background-color: #000; }
         
-        .highlight-green { color: #4CAF50; font-weight: bold; }
-        .highlight-white { color: #ddd; font-weight: bold; }
-        .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
-
-        canvas { 
-            max-width: 100%; 
-            border: 1px solid #333; 
-            margin-top: 20px; 
-            background-color: #000; 
+        /* --- VIDEO TOOL SPECIFIC --- */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 20px auto;
+            text-align: left;
+            background: #222;
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 600px;
         }
+        .control-group label { display: block; color: #888; font-size: 0.8em; margin-bottom: 5px; }
+        .control-group input, .control-group select {
+            width: 90%; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px;
+        }
+        #videoPreviewContainer img { max-width: 100%; border: 1px solid #444; margin-top: 15px; }
+        
+        .download-link {
+            display: inline-block; margin-top: 15px; color: #4CAF50; text-decoration: none;
+            font-weight: bold; border: 1px solid #4CAF50; padding: 10px 20px; border-radius: 4px;
+        }
+        .download-link:hover { background: #4CAF50; color: #000; }
 
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>MMC - Gif Generator</h1>
-    <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
-    
-    <label for="gifInput" class="custom-file-upload">
-        Select GIF File
-    </label>
-    <input type="file" id="gifInput" accept="image/gif">
-    
-    <div id="status">Waiting for file...</div>
+<div class="main-container">
+    <h1>MMC - Creator Suite</h1>
 
-    <div id="instructionText" class="instruction-text"></div>
-
-    <div class="hidden">
-        <img id="tempImg" rel:auto_play="0" />
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('tabGif')">GIF to Texture</button>
+        <button class="tab-btn" onclick="openTab('tabVideo')">Video to GIF</button>
     </div>
 
-    <canvas id="outputCanvas"></canvas>
-    
-    <div class="btn-group">
-        <button id="btn1024" disabled>Download<br>1024 x 1024</button>
-        <button id="btn2048" disabled>Download<br>2048 x 2048</button>
+    <div id="tabGif" class="tab-content active">
+        <p style="color: #666;">Convert animated GIFs to SL Texture Atlas.</p>
+
+        <label for="gifInput" class="custom-file-upload">Select GIF File</label>
+        <input type="file" id="gifInput" accept="image/gif">
+        
+        <div id="gifStatus" class="status-msg">Waiting for file...</div>
+        <div id="gifInstruction" class="instruction-text"></div>
+
+        <div class="hidden"><img id="tempImg" rel:auto_play="0" /></div>
+        <canvas id="outputCanvas"></canvas>
+        
+        <div style="margin-top: 20px;">
+            <button id="btn1024" class="action-btn" disabled>Download<br>1024 x 1024</button>
+            <button id="btn2048" class="action-btn" disabled>Download<br>2048 x 2048</button>
+        </div>
     </div>
+
+    <div id="tabVideo" class="tab-content">
+        <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
+
+        <label for="videoInput" class="custom-file-upload">1. Select Video (MP4)</label>
+        <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg">
+
+        <div class="controls-grid">
+            <div class="control-group">
+                <label>Start (Sec)</label>
+                <input type="number" id="startTime" value="0" min="0" step="0.5">
+            </div>
+            <div class="control-group">
+                <label>Duration (Sec)</label>
+                <input type="number" id="duration" value="2" min="0.5" max="10" step="0.5">
+            </div>
+            <div class="control-group">
+                <label>Quality</label>
+                <select id="resolution">
+                    <option value="200">Low</option>
+                    <option value="300" selected>Medium (SL)</option>
+                    <option value="400">High</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="convertVideoBtn" class="action-btn" style="width: 100%; max-width: 600px;" disabled>2. Convert to GIF</button>
+        
+        <div id="videoStatus" class="status-msg">Waiting for video...</div>
+        <div id="videoPreviewContainer"></div>
+    </div>
+
 </div>
 
 <script>
-    const fileInput = document.getElementById('gifInput');
-    const statusDiv = document.getElementById('status');
-    const instructionText = document.getElementById('instructionText');
+    // --- TAB LOGIC ---
+    function openTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        // Show selected
+        document.getElementById(tabName).classList.add('active');
+        
+        // Highlight button
+        // Find the button that called this function based on text is tricky, 
+        // simpler to just iterate buttons in order usually, but here we cheat slightly with event delegation or direct class manipulation
+        event.currentTarget.classList.add('active');
+    }
+
+    // ==========================================================
+    // LOGIC: GIF TO TEXTURE
+    // ==========================================================
+    const gifInput = document.getElementById('gifInput');
+    const gifStatus = document.getElementById('gifStatus');
+    const gifInstruction = document.getElementById('gifInstruction');
     const tempImg = document.getElementById('tempImg');
     const outputCanvas = document.getElementById('outputCanvas');
     const btn1024 = document.getElementById('btn1024');
@@ -159,13 +242,12 @@
     let superGif = null;
     let gifData = { cols: 4, rows: 4, fps: 15 };
 
-    fileInput.addEventListener('change', function(e) {
+    gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Reset UI
-        statusDiv.innerText = "Loading GIF...";
-        instructionText.style.display = 'none';
+        gifStatus.innerText = "Loading GIF...";
+        gifInstruction.style.display = 'none';
         btn1024.disabled = true;
         btn2048.disabled = true;
         outputCanvas.height = 0;
@@ -191,33 +273,24 @@
         const len = superGif.get_length();
         const width = superGif.get_canvas().width;
         const height = superGif.get_canvas().height;
-        
-        // 1. Calculate Grid
         const cols = Math.ceil(Math.sqrt(len));
         const rows = Math.ceil(len / cols);
         
-        // 2. Calculate FPS
         let delay = 10;
         try { delay = superGif.get_frames()[0].delay; } catch(e){}
         const fps = delay > 0 ? Math.round(100 / delay) : 15;
 
-        // Save Data
         gifData = { cols: cols, rows: rows, fps: fps };
         const suffixExample = `_${cols}_${rows}_${fps}`;
 
-        // Update UI
-        statusDiv.innerHTML = `<span class="highlight-green">✔ Processing Complete!</span><br>Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
+        gifStatus.innerHTML = `<span class="highlight-green">✔ Processing Complete!</span><br>Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
         
-        // Show Clean Instructions
-        instructionText.style.display = 'block';
-        instructionText.innerHTML = `
+        gifInstruction.style.display = 'block';
+        gifInstruction.innerHTML = `
             File will be saved as: <span class="file-name-style">YOURGIFNAME${suffixExample}.png</span><br>
-            <span style="font-size: 0.85em; opacity: 0.8;">
-            (You can rename "YOURGIFNAME", but keep the numbers at the end).
-            </span>
+            <span style="font-size: 0.85em; opacity: 0.8;">(You can rename "YOURGIFNAME", but keep the numbers at the end).</span>
         `;
 
-        // Draw Canvas
         outputCanvas.width = cols * width;
         outputCanvas.height = rows * height;
         const ctx = outputCanvas.getContext('2d');
@@ -234,7 +307,6 @@
         btn1024.disabled = false;
         btn2048.disabled = false;
         
-        // Button Actions
         btn1024.onclick = () => downloadResized(1024);
         btn2048.onclick = () => downloadResized(2048);
     }
@@ -245,15 +317,75 @@
         tempCanvas.height = size;
         const tCtx = tempCanvas.getContext('2d');
         tCtx.drawImage(outputCanvas, 0, 0, outputCanvas.width, outputCanvas.height, 0, 0, size, size);
-
-        // FORCE DEFAULT NAME "YOURGIFNAME"
+        
         const finalName = `YOURGIFNAME_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
-
         const link = document.createElement('a');
         link.download = finalName;
         link.href = tempCanvas.toDataURL("image/png");
         link.click();
     }
+
+    // ==========================================================
+    // LOGIC: VIDEO TO GIF
+    // ==========================================================
+    const videoInput = document.getElementById('videoInput');
+    const convertVideoBtn = document.getElementById('convertVideoBtn');
+    const videoStatus = document.getElementById('videoStatus');
+    const videoPreviewContainer = document.getElementById('videoPreviewContainer');
+    
+    let uploadedVideo = null;
+
+    videoInput.addEventListener('change', function(e) {
+        uploadedVideo = e.target.files[0];
+        if (uploadedVideo) {
+            videoStatus.innerText = "Video loaded: " + uploadedVideo.name;
+            convertVideoBtn.disabled = false;
+        }
+    });
+
+    convertVideoBtn.addEventListener('click', function() {
+        if (!uploadedVideo) return;
+
+        convertVideoBtn.disabled = true;
+        videoStatus.innerText = "Processing... Please wait...";
+        videoPreviewContainer.innerHTML = "";
+
+        const start = parseFloat(document.getElementById('startTime').value);
+        const dur = parseFloat(document.getElementById('duration').value);
+        const res = parseInt(document.getElementById('resolution').value);
+
+        gifshot.createGIF({
+            video: [URL.createObjectURL(uploadedVideo)],
+            gifWidth: res,
+            gifHeight: res,
+            interval: 0.1,  // 10 FPS
+            numFrames: 10 * dur,
+            offset: start,
+            text: '' 
+        }, function(obj) {
+            if(!obj.error) {
+                const image = obj.image;
+                videoStatus.innerHTML = `<span class="highlight-green">✔ Conversion Complete!</span>`;
+                
+                const imgElement = document.createElement('img');
+                imgElement.src = image;
+                videoPreviewContainer.appendChild(imgElement);
+
+                const dlLink = document.createElement('a');
+                dlLink.href = image;
+                dlLink.download = "converted_video.gif";
+                dlLink.innerText = "Download GIF";
+                dlLink.className = "download-link";
+                videoPreviewContainer.appendChild(document.createElement('br'));
+                videoPreviewContainer.appendChild(dlLink);
+
+                convertVideoBtn.disabled = false;
+            } else {
+                videoStatus.innerText = "Error: " + obj.errorCode;
+                convertVideoBtn.disabled = false;
+            }
+        });
+    });
 </script>
 
 </body>
