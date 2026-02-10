@@ -116,12 +116,13 @@
         .heavy-file-icon { font-size: 50px; margin: 20px; color: #4CAF50; }
         .heavy-warning { color: #FFD700; font-size: 0.9em; margin-bottom: 10px; max-width: 500px; margin: 0 auto 10px auto; }
         
-        /* CORREÇÃO CSS: Centralização forçada do texto de aviso */
+        /* CORREÇÃO CSS: Centralização perfeita */
         .video-tip { 
             font-size: 0.8em; color: #666; 
-            margin: 10px auto 15px auto; 
+            margin: 10px auto 25px auto; 
             max-width: 600px; 
-            text-align: center; 
+            text-align: center;
+            display: block;
         }
     </style>
 </head>
@@ -172,12 +173,12 @@
             </div>
 
             <div id="tabVideo" class="tab-content" style="display: none;"> 
-                <p style="color: #666; margin-bottom: 10px;">Convert MP4 videos to optimized GIFs.</p>
+                <p style="color: #666; margin-bottom: 5px;">Convert MP4 videos to optimized GIFs.</p>
                 
-                <p class="video-tip">
+                <div class="video-tip">
                     Use a video with few seconds. Using a very long video will generate many frames. <br>
                     The shorter the video, the fewer frames and the higher the quality your gif will have.
-                </p>
+                </div>
 
                 <label for="videoInput" class="custom-file-upload">1. Select Video (MP4)</label>
                 <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg" onclick="this.value=null">
@@ -394,7 +395,7 @@
     }
 
     // ==========================================================
-    // 3. FERRAMENTA VIDEO -> GIF (COM CORREÇÕES DE TRAVAMENTO)
+    // 3. FERRAMENTA VIDEO -> GIF (CORREÇÃO FINAL DE TRAVAMENTO)
     // ==========================================================
     const videoInput = document.getElementById('videoInput');
     const convertVideoBtn = document.getElementById('convertVideoBtn');
@@ -410,19 +411,15 @@
     let tempVideoObjUrl = null; 
     let currentResultBlobUrl = null; 
 
-    function dataURItoBlob(dataURI) {
-        // Bloco seguro: Converte base64 para blob de forma síncrona
+    // --- NOVA FUNÇÃO ANTI-TRAVAMENTO ---
+    // Usa fetch para converter base64 em Blob sem bloquear a thread principal (CPU)
+    async function convertBase64ToBlobSafe(dataURI) {
         try {
-            const byteString = atob(dataURI.split(',')[1]);
-            const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([ab], {type: mimeString});
+            const res = await fetch(dataURI);
+            const blob = await res.blob();
+            return blob;
         } catch (e) {
-            console.error("Blob conversion failed", e);
+            console.error("Async blob conversion failed", e);
             return null;
         }
     }
@@ -477,8 +474,6 @@
             dur = MAX_ALLOWED_DURATION;
             document.getElementById('duration').value = MAX_ALLOWED_DURATION;
         }
-        
-        // Garante que duração seja válida para evitar hanging
         if (!dur || dur <= 0) dur = 2;
 
         const resVal = document.getElementById('resolution').value;
@@ -493,15 +488,26 @@
             if (resVal === "original") { 
                 finalW = this.videoWidth; 
                 finalH = this.videoHeight; 
+                
+                // OTIMIZAÇÃO: Se for original e muito grande, limita a 800px para não crashar
+                // e ajusta o FPS para economizar memória
+                if (finalW > 1280) {
+                     finalW = 1280; // Hard limit interno para evitar crash do navegador
+                     finalH = Math.round(1280 * (this.videoHeight / this.videoWidth));
+                }
             } else { 
                 const dw = parseInt(resVal); 
                 finalW = dw; 
                 finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); 
             }
 
+            // Reduz quadros por segundo em vídeos HD para evitar estouro de memória
             let interval = 0.1;
+            if (finalW >= 800) {
+                interval = 0.15; // ~7 FPS (Mais leve)
+            }
             if (finalW >= 1024 && dur > 5) {
-                interval = 0.15;
+                interval = 0.2; // ~5 FPS (Muito mais leve para arquivos longos)
             }
 
             gifshot.createGIF({
@@ -512,67 +518,65 @@
                 numFrames: (dur / interval), 
                 offset: start,
                 progressCallback: p => { 
-                    // CORREÇÃO: Trava o progresso em 100% visualmente
                     const pc = Math.min(100, Math.round(p * 100));
                     videoProgressBar.style.width = pc + '%'; 
                     videoProgressBar.innerText = pc + '%';
                 }
-            }, obj => {
+            }, async (obj) => { // Callback transformado em ASYNC
                 
-                // CORREÇÃO: setTimeout permite que a UI atualize antes de travar processando o Blob
-                setTimeout(() => {
-                    videoProgressContainer.style.display = 'none';
+                if (!obj.error) {
+                    // Passo extra: Converter o base64 gigante em Blob usando Fetch
+                    // Isso evita que a thread principal trave (freezing)
+                    const imgBlob = await convertBase64ToBlobSafe(obj.image);
                     
-                    if (!obj.error) {
-                        videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
-                        
-                        const imgBlob = dataURItoBlob(obj.image);
-                        
-                        if (!imgBlob) {
-                            videoStatus.innerText = "Error: Result too large for browser memory.";
-                            convertVideoBtn.disabled = false;
-                            return;
-                        }
+                    videoProgressContainer.style.display = 'none';
 
-                        // Limpa string gigante
-                        obj.image = null; 
-
-                        currentResultBlobUrl = URL.createObjectURL(imgBlob);
-
-                        if (resVal === "original" || finalW > 800) {
-                            videoPreviewContainer.innerHTML = `
-                                <div class="heavy-file-icon">✅</div>
-                                <div class="heavy-warning">File created! (Preview hidden to prevent lag on heavy files)</div>
-                            `;
-                        } else {
-                            const img = document.createElement('img'); 
-                            img.src = currentResultBlobUrl; 
-                            videoPreviewContainer.appendChild(img);
-                        }
-
-                        const actions = document.createElement('div'); 
-                        actions.className = 'result-actions';
-                        
-                        const dl = document.createElement('a');
-                        dl.href = currentResultBlobUrl; 
-                        dl.download = "video.gif"; 
-                        dl.innerText = "Download GIF"; 
-                        dl.className = "download-link-btn";
-                        
-                        const rst = document.createElement('button');
-                        rst.innerText = "Start Over"; 
-                        rst.className = "action-btn"; 
-                        rst.onclick = function() { resetVideoTool(); };
-                        
-                        actions.append(dl, rst); 
-                        videoPreviewContainer.append(actions);
-                        
-                    } else { 
-                        console.error(obj.errorCode);
-                        videoStatus.innerText = "Error: " + obj.errorCode; 
+                    if (!imgBlob) {
+                        videoStatus.innerText = "Error: Browser run out of memory.";
                         convertVideoBtn.disabled = false;
+                        return;
                     }
-                }, 100); // 100ms de atraso para renderizar UI
+
+                    // Limpa a variável pesada da memória imediatamente
+                    obj.image = null; 
+
+                    currentResultBlobUrl = URL.createObjectURL(imgBlob);
+                    videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
+
+                    if (resVal === "original" || finalW > 800) {
+                        videoPreviewContainer.innerHTML = `
+                            <div class="heavy-file-icon">✅</div>
+                            <div class="heavy-warning">File created! (Preview hidden to prevent lag)</div>
+                        `;
+                    } else {
+                        const img = document.createElement('img'); 
+                        img.src = currentResultBlobUrl; 
+                        videoPreviewContainer.appendChild(img);
+                    }
+
+                    const actions = document.createElement('div'); 
+                    actions.className = 'result-actions';
+                    
+                    const dl = document.createElement('a');
+                    dl.href = currentResultBlobUrl; 
+                    dl.download = "video.gif"; 
+                    dl.innerText = "Download GIF"; 
+                    dl.className = "download-link-btn";
+                    
+                    const rst = document.createElement('button');
+                    rst.innerText = "Start Over"; 
+                    rst.className = "action-btn"; 
+                    rst.onclick = function() { resetVideoTool(); };
+                    
+                    actions.append(dl, rst); 
+                    videoPreviewContainer.append(actions);
+
+                } else { 
+                    videoProgressContainer.style.display = 'none';
+                    console.error(obj.errorCode);
+                    videoStatus.innerText = "Error: " + obj.errorCode; 
+                    convertVideoBtn.disabled = false;
+                }
             });
         };
         
