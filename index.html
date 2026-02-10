@@ -63,7 +63,7 @@
             font-size: 13px; cursor: pointer; width: 240px;
         }
 
-        /* CHECKBOX FIX */
+        /* CHECKBOXES */
         .bg-option { display: flex; align-items: center; margin-top: 5px; font-size: 0.85em; color: #bbb; cursor: pointer; }
         .bg-option input { margin-right: 8px; cursor: pointer; accent-color: #4a90e2; }
 
@@ -141,9 +141,14 @@
                                 <option value="2048">2048px (High) 50L$ Upload</option>
                             </select>
                             
-                            <label class="bg-option" title="Fixes ghosting in SL by removing alpha channel">
+                            <label class="bg-option" title="Adds black background to prevent artifacts">
                                 <input type="checkbox" id="forceBg" checked onchange="triggerUpdate()"> 
                                 Remove Transparency (Fix Ghosting)
+                            </label>
+
+                            <label class="bg-option" title="Adds padding inside cells to prevent bleeding">
+                                <input type="checkbox" id="safeBorder" checked onchange="triggerUpdate()"> 
+                                Safe Borders (Prevent Bleeding)
                             </label>
                         </div>
                         
@@ -241,6 +246,7 @@
     const resSelect = document.getElementById('resSelect');
     const gridSelect = document.getElementById('gridSelect');
     const forceBg = document.getElementById('forceBg');
+    const safeBorder = document.getElementById('safeBorder'); // NOVO CONTROLE
     const autoGridArea = document.getElementById('autoGridArea');
     const manualGridArea = document.getElementById('manualGridArea');
     const toggleCustomBtn = document.getElementById('toggleCustomBtn');
@@ -272,7 +278,6 @@
             gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas', cumulative: true })
             .then(function (frames) {
                 currentFrames = frames;
-                
                 const tempCanvas = frames[0].getImage(); 
                 const w = tempCanvas.width;
                 const h = tempCanvas.height;
@@ -315,7 +320,6 @@
     function updateRenderLogic() {
         if (currentFrames.length === 0) return;
         let selectedGrid;
-
         if (isCustomMode) {
             const c = parseInt(customCols.value) || 1;
             const r = parseInt(customRows.value) || 1;
@@ -339,7 +343,6 @@
         let candidates = [];
         let imgRatio = imgW / imgH;
         let frameOptions = [count, count - 1]; 
-
         frameOptions.forEach(targetCount => {
             if (targetCount < 1) return;
             for (let c = 1; c <= 12; c++) {
@@ -386,18 +389,9 @@
         const framesToRender = currentFrames.slice(0, safeUsedFrames);
         const count = framesToRender.length;
         
-        // --- FPS CALCULATION FIX ---
-        // Pega o delay em cs (1/100s). Ex: 10cs = 100ms
         let delay = currentFrames[0].frameInfo.delay || 10;
-        
-        // Correção de navegador: delays < 2 (20ms) costumam ser bugados ou rápidos demais
         if (delay < 2) delay = 10; 
-
         let fps = Math.round(100 / delay);
-
-        // CLAMP PARA SECOND LIFE
-        // Se o FPS calculado for maior que 20, forçamos para um padrão seguro (15 ou 10)
-        // Isso evita que o GIF fique "acelerado" no jogo.
         if (fps > 20) fps = 15;
         if (fps <= 0) fps = 10;
 
@@ -408,7 +402,7 @@
         ctx.imageSmoothingQuality = 'high';
         ctx.clearRect(0, 0, targetSize, targetSize);
 
-        // BACKGROUND FIX (Preto Sólido para evitar Ghosting)
+        // Fundo Preto
         if (forceBg.checked) {
             ctx.fillStyle = "#000000"; 
             ctx.fillRect(0, 0, targetSize, targetSize);
@@ -417,11 +411,23 @@
         const cellW = targetSize / grid.c;
         const cellH = targetSize / grid.r;
 
+        // PADDING CALCULATION (O segredo do espaçamento)
+        let pad = 0;
+        if (safeBorder.checked) {
+            pad = 2; // 2 pixels de encolhimento para criar borda de segurança
+        }
+
         framesToRender.forEach((f, i) => {
             const x = (i % grid.c) * cellW;
             const y = Math.floor(i / grid.c) * cellH;
             const frameImg = f.getImage();
-            ctx.drawImage(frameImg, 0, 0, frameImg.width, frameImg.height, x, y, cellW, cellH);
+            
+            // Desenha com padding interno se a opção estiver marcada
+            ctx.drawImage(
+                frameImg, 
+                0, 0, frameImg.width, frameImg.height, 
+                x + (pad/2), y + (pad/2), cellW - pad, cellH - pad
+            );
         });
 
         const totalSlots = grid.c * grid.r;
@@ -431,7 +437,13 @@
             for (let i = count; i < totalSlots; i++) {
                 const x = (i % grid.c) * cellW;
                 const y = Math.floor(i / grid.c) * cellH;
-                ctx.drawImage(lastImg, 0, 0, lastImg.width, lastImg.height, x, y, cellW, cellH);
+                
+                // Repete o último frame (com padding)
+                ctx.drawImage(
+                    lastImg, 
+                    0, 0, lastImg.width, lastImg.height, 
+                    x + (pad/2), y + (pad/2), cellW - pad, cellH - pad
+                );
             }
         }
 
