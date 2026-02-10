@@ -88,8 +88,23 @@
 
         .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5; display: none; max-width: 600px; }
         
-        /* --- RESULTADOS --- */
-        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background-image: linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%); background-size: 20px 20px; }
+        /* --- RESULTADOS (CANVAS COM FUNDO TRANSPARENTE CLARO) --- */
+        canvas { 
+            max-width: 100%; 
+            border: 1px solid #333; 
+            margin-top: 20px; 
+            display: none; 
+            
+            /* Padrão Xadrez Real (Branco/Cinza) para confirmar transparência */
+            background-color: #fff;
+            background-image: 
+                linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px; 
+        }
+
         #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; }
@@ -184,12 +199,12 @@
                     <h3>Quick Guide</h3>
                     <ol>
                         <li>Upload your video on EZGIF.</li>
-                        <li><strong>IMPORTANT:</strong> If you use other tools, make sure the GIF is "Unoptimized" (no transparency).</li>
+                        <li><strong>IMPORTANT:</strong> Use the <strong>"Unoptimize"</strong> (or 'Coalesce') tool if the texture looks transparent in SL.</li>
                         <li>Download the final GIF.</li>
                         <li>Upload it here in the <strong>"GIF to Texture"</strong> tab.</li>
                     </ol>
                     <div class="note">
-                        This tool now automatically fixes transparency issues for most GIFs.
+                        SL Scripts work best with "Unoptimized" GIFs (full image per frame).
                     </div>
                 </div>
             </div>
@@ -301,8 +316,7 @@
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
             try {
-                // CORREÇÃO CRÍTICA AQUI: 'cumulative: true'
-                // Isso força a biblioteca a montar o quadro completo, eliminando transparências quebradas.
+                // 'cumulative: true' ajuda a montar frames que dependem dos anteriores
                 gifFrames({ 
                     url: event.target.result, 
                     frames: 'all', 
@@ -346,7 +360,6 @@
         frames.forEach((f, i) => {
             const x = (i % cols) * w;
             const y = Math.floor(i / cols) * h;
-            // Como cumulative: true está ativado, f.getImage() já retorna o quadro completo pintado
             ctx.drawImage(f.getImage(), x, y);
         });
         
