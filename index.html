@@ -118,6 +118,8 @@
         
         .heavy-file-icon { font-size: 50px; margin: 20px; color: #4CAF50; }
         .heavy-warning { color: #FFD700; font-size: 0.9em; margin-bottom: 10px; max-width: 500px; margin: 0 auto 10px auto; }
+        
+        .video-tip { font-size: 0.8em; color: #666; margin-top: -10px; margin-bottom: 15px; max-width: 600px; }
     </style>
 </head>
 <body>
@@ -167,7 +169,13 @@
             </div>
 
             <div id="tabVideo" class="tab-content" style="display: none;"> 
-                <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
+                <p style="color: #666; margin-bottom: 10px;">Convert MP4 videos to optimized GIFs.</p>
+                
+                <p class="video-tip">
+                    Use a video with few seconds. Using a very long video will generate many frames. <br>
+                    The shorter the video, the fewer frames and the higher the quality your gif will have.
+                </p>
+
                 <label for="videoInput" class="custom-file-upload">1. Select Video (MP4)</label>
                 <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg" onclick="this.value=null">
                 
@@ -178,8 +186,8 @@
                         <label>Max Width / Quality</label>
                         <select id="resolution">
                             <option value="300">Small (300px)</option>
-                            <option value="600" selected>Medium (600px)</option>
-                            <option value="1024">HD (1024px)</option>
+                            <option value="600">Medium (600px)</option>
+                            <option value="1024" selected>HD (1024px)</option>
                             <option value="original">⚠ ORIGINAL (Heavy)</option>
                         </select>
                     </div>
@@ -383,7 +391,7 @@
     }
 
     // ==========================================================
-    // 3. FERRAMENTA VIDEO -> GIF (CORREÇÃO DE TRAVAMENTO)
+    // 3. FERRAMENTA VIDEO -> GIF
     // ==========================================================
     const videoInput = document.getElementById('videoInput');
     const convertVideoBtn = document.getElementById('convertVideoBtn');
@@ -419,6 +427,19 @@
         if (uploadedVideo) { 
             videoStatus.innerText = "Video: " + uploadedVideo.name; 
             convertVideoBtn.disabled = false; 
+
+            // CORREÇÃO 1: Lógica para pegar duração original e atualizar o input
+            const tempVideo = document.createElement('video');
+            tempVideo.preload = 'metadata';
+            tempVideo.onloadedmetadata = function() {
+                // Atualiza o campo de duração com o valor real do vídeo
+                const realDuration = this.duration;
+                if(realDuration && !isNaN(realDuration)) {
+                    document.getElementById('duration').value = realDuration.toFixed(1);
+                }
+                URL.revokeObjectURL(tempVideo.src);
+            };
+            tempVideo.src = URL.createObjectURL(uploadedVideo);
         }
     });
 
@@ -530,7 +551,6 @@
         videoProgressContainer.style.display = 'none';
         videoProgressBar.style.width = '0%';
         
-        // CORREÇÃO: Força o desbloqueio de todos os inputs caso tenham travado
         document.getElementById('resolution').disabled = false;
         document.getElementById('startTime').disabled = false;
         document.getElementById('duration').disabled = false;
