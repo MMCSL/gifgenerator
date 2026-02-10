@@ -79,15 +79,15 @@
         button.action-btn:hover, .external-link-btn:hover { background-color: #fff; color: #000; }
         
         .external-link-btn {
-            background-color: #d63c3c; /* Cor destaque Adobe */
-            border-color: #d63c3c;
+            background-color: #4a90e2; 
+            border-color: #4a90e2;
             width: auto;
             padding: 15px 40px;
             font-weight: bold;
         }
         .external-link-btn:hover {
-            background-color: #ff5555;
-            border-color: #ff5555;
+            background-color: #67aefc;
+            border-color: #67aefc;
             color: #fff;
         }
 
@@ -107,10 +107,10 @@
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; }
 
-        /* --- INSTRUCOES VIDEO --- */
+        /* --- INSTRUCOES EXTERNAS --- */
         .external-instructions {
             text-align: left;
-            max-width: 500px;
+            max-width: 550px;
             margin: 30px auto;
             background: #222;
             padding: 20px;
@@ -119,8 +119,10 @@
         }
         .external-instructions h3 { margin-top: 0; color: #fff; font-size: 1.1em; }
         .external-instructions ol { padding-left: 20px; color: #aaa; line-height: 1.6; }
-        .external-instructions li { margin-bottom: 10px; }
-        .note { font-size: 0.8em; color: #666; font-style: italic; margin-top: 15px; }
+        .external-instructions li { margin-bottom: 12px; }
+        .external-instructions strong { color: #eee; }
+        .note { font-size: 0.9em; color: #888; border-top: 1px solid #333; padding-top: 10px; margin-top: 15px; }
+        .warning-text { color: #e6b800; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -171,23 +173,26 @@
 
             <div id="tabVideo" class="tab-content" style="display: none;"> 
                 <p style="color: #888; margin-bottom: 30px;">
-                    For better quality and stability, we recommend using Adobe Express.
+                    We recommend <strong>EZGIF</strong> to create glitch-free GIFs.
                 </p>
                 
-                <a href="https://www.adobe.com/express/feature/video/convert/mp4-to-gif" target="_blank" class="external-link-btn">
-                    OPEN ADOBE CONVERTER ➔
+                <a href="https://ezgif.com/video-to-gif" target="_blank" class="external-link-btn">
+                    OPEN EZGIF CONVERTER ➔
                 </a>
 
                 <div class="external-instructions">
-                    <h3>How to convert:</h3>
+                    <h3>How to make it work (No bugs):</h3>
                     <ol>
-                        <li>Click the red button above to open Adobe Express.</li>
-                        <li>Upload your MP4 video file.</li>
-                        <li>Select <strong>"Large"</strong> or <strong>"Original"</strong> quality.</li>
-                        <li>Download the finished <strong>.GIF</strong> file.</li>
-                        <li>Come back here, go to the <strong>"GIF to Texture"</strong> tab, and upload your new GIF!</li>
+                        <li>Click the blue button to open EZGIF.</li>
+                        <li>Upload your video and convert it.</li>
+                        <li><strong>IMPORTANT:</strong> If the texture looks weird or transparent in SL:
+                            <br>Look for the <strong>"Optimize"</strong> tool on EZGIF, and select <strong>"Unoptimize"</strong> (or 'Coalesce').
+                        </li>
+                        <li>Download the final GIF and upload it here in the <strong>"GIF to Texture"</strong> tab.</li>
                     </ol>
-                    <div class="note">Tip: Keep your videos short (under 10 seconds) for the best result in Second Life.</div>
+                    <div class="note">
+                        <span class="warning-text">Why unoptimize?</span> Scripts in SL work better with "Unoptimized" GIFs because they contain the full image in every frame, preventing the "ghosting" effect.
+                    </div>
                 </div>
             </div>
         </div>
@@ -270,7 +275,7 @@
     checkAccess();
 
     // ==========================================================
-    // 2. FERRAMENTA GIF -> TEXTURE (COM CORREÇÃO DE OTIMIZAÇÃO)
+    // 2. FERRAMENTA GIF -> TEXTURE (CÓDIGO CLÁSSICO - ESTÁVEL)
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
@@ -297,13 +302,13 @@
         const reader = new FileReader();
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
+            
+            // Usando o método clássico e simples que funciona com GIFs unoptimized
             try {
-                // Solicita os frames como canvas para processamento
                 gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas' })
                 .then(function (frameData) {
-                    updateGifProgress(80, "Processing optimized frames...");
-                    // Pequeno delay para a UI atualizar
-                    setTimeout(() => { processGifData(frameData); }, 50);
+                    updateGifProgress(80, "Drawing texture...");
+                    setTimeout(() => { processGifData(frameData); }, 100);
                 }).catch(err => {
                     throw new Error(err);
                 });
@@ -330,41 +335,19 @@
         
         gifData = { cols, rows, fps };
         
-        // --- CORREÇÃO PARA GIFS OTIMIZADOS ---
-        // Cria um canvas temporário para "montar" a animação quadro a quadro
-        const compositionCanvas = document.createElement('canvas');
-        compositionCanvas.width = w;
-        compositionCanvas.height = h;
-        const compositionCtx = compositionCanvas.getContext('2d', { willReadFrequently: true });
-        compositionCtx.imageSmoothingEnabled = false;
-
-        // Prepara o canvas de saída final
+        // --- LOOP SIMPLES (CLÁSSICO) ---
+        // Este loop assume que o GIF já está "Unoptimized" (cada frame é completo).
+        // Isso evita bugs de processamento no navegador.
         outputCanvas.width = cols * w; outputCanvas.height = rows * h;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-
+        
         frames.forEach((f, i) => {
-            // Lógica básica de descarte (se o quadro anterior mandou limpar, limpa)
-            if (i > 0) {
-                const prevFrameInfo = frames[i-1].frameInfo;
-                // Disposal 2 = Restore to background (clear)
-                if (prevFrameInfo.disposal === 2) {
-                     compositionCtx.clearRect(0, 0, w, h);
-                }
-            }
-            
-            // Desenha o quadro atual (que pode ter transparência) sobre o composto
-            compositionCtx.drawImage(f.getImage(), 0, 0);
-
-            // Calcula posição na grade
             const x = (i % cols) * w;
             const y = Math.floor(i / cols) * h;
-
-            // Copia o quadro COMPOSTO para a grade final
-            ctx.drawImage(compositionCanvas, x, y);
+            ctx.drawImage(f.getImage(), x, y);
         });
-        // ------------------------------------
         
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
