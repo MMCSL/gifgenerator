@@ -33,7 +33,6 @@
             text-align: center;
             color: #d9534f;
         }
-        /* Estilo para o GIF de erro */
         .lock-screen-gif {
             max-width: 150px;
             margin-bottom: 20px;
@@ -248,7 +247,7 @@
     // SECURITY CHECK (TOKEN VERIFICATION)
     // ==========================================================
     
-    // SENHA IGUAL AO LSL
+    // ESTA SENHA DEVE SER A MESMA DO LSL
     const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
 
     function checkAccess() {
@@ -261,19 +260,18 @@
             return; // Stay locked
         }
 
-        // --- CORREÇÃO IMPORTANTE AQUI ---
-        // O LSL adiciona um "0" (nonce) ao final da string antes de gerar o hash.
-        // Adicionamos + "0" aqui para bater o cálculo.
-        const calculatedToken = CryptoJS.MD5(userUUID + SECRET_KEY + "0").toString();
+        // CORREÇÃO: O LSL usa 'llMD5String(str, 0)', que adiciona ":0" ao final.
+        // Precisamos adicionar ":0" aqui no JS também para bater a conta.
+        const calculatedToken = CryptoJS.MD5(userUUID + SECRET_KEY + ":0").toString();
 
         if (urlToken === calculatedToken) {
-            // SUCCESS: Unlock!
+            // SUCCESS: Signature Matches!
             document.getElementById('lockedScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
         } else {
             console.log("Access Denied: Invalid Token Signature.");
-            console.log("Expected: " + calculatedToken);
-            console.log("Received: " + urlToken);
+            console.log("Expected (JS): " + calculatedToken);
+            console.log("Received (URL): " + urlToken);
         }
     }
 
@@ -358,7 +356,6 @@
         gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
         gifInstruction.style.display = 'block';
         gifInstruction.innerHTML = `File name format: <span class="file-name-style">YOURNAME${suffixExample}.png</span><br><span style="font-size: 0.85em; opacity: 0.8;">(Keep the numbers at the end for the script).</span>`;
-        
         outputCanvas.width = cols * width;
         outputCanvas.height = rows * height;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
