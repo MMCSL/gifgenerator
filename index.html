@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMC - SL Gif Creator (Auto)</title>
+    <title>MMC - SL Gif Creator (Exact Clone)</title>
     
     <script src="https://unpkg.com/gif-frames@1.0.1/dist/gif-frames.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- ESTILO GERAL --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #111; color: #eee; text-align: center; 
@@ -27,51 +26,37 @@
         }
 
         h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
+        
         .header-credits { font-size: 0.75em; color: #666; margin-bottom: 30px; }
         .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; }
 
-        /* --- TABS --- */
         .tabs { display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px; }
         .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s; }
         .tab-btn:hover { color: #fff; }
         .tab-btn.active { color: #fff; border-bottom: 2px solid #eee; font-weight: bold; }
-        .tab-content { display: none; animation: fadeIn 0.5s; } 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- INPUTS --- */
         input[type=file] { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
         .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s; }
         .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
-        /* --- BOTOES --- */
-        button.action-btn, .action-link-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; display: inline-block; text-decoration: none; }
-        button.action-btn:hover, .action-link-btn:hover { background-color: #fff; color: #000; }
-        .action-link-btn { background-color: #4a90e2; border-color: #4a90e2; width: auto; padding: 15px 40px; font-weight: bold; }
-        .action-link-btn:hover { background-color: #67aefc; border-color: #67aefc; color: #fff; }
+        button.action-btn { background-color: #000; color: white; padding: 15px 0; border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s; display: inline-block; }
+        button.action-btn:hover { background-color: #fff; color: #000; }
 
-        /* --- UI ELEMENTS --- */
         .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
         .highlight-success { color: #eee; font-weight: bold; } 
         .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
+        
         .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
         .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
-        .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5; display: none; max-width: 600px; }
-        
+
         canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background: transparent; }
         #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; }
 
-        /* --- EZGIF HELP --- */
-        .external-instructions { text-align: left; max-width: 500px; margin: 40px auto; color: #888; }
-        .external-instructions h3 { margin-top: 0; color: #fff; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 20px; font-weight: 300; }
-        .external-instructions ol { padding-left: 20px; line-height: 1.8; font-size: 0.95em; }
-        .external-instructions li { margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 5px; }
-        
-        /* BLOQUEIO */
+        /* --- LOCK SCREEN --- */
         #lockedScreen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh; text-align: center; color: #d9534f; }
         #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        #lockedScreen p { color: #888; font-size: 1.1em; }
     </style>
 </head>
 <body>
@@ -91,75 +76,45 @@
             </div>
 
             <div class="tabs">
-                <button id="tabBtnGif" class="tab-btn active" onclick="switchTab('gif')">GIF to Texture</button>
-                <button id="tabBtnVideo" class="tab-btn" onclick="switchTab('video')">Video to GIF</button>
+                <button class="tab-btn active">GIF to Texture</button>
             </div>
 
-            <div id="tabGif" class="tab-content" style="display: block;"> 
-                <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
-                
-                <label for="gifInput" class="custom-file-upload">Select GIF File</label>
-                <input type="file" id="gifInput" accept="image/gif" onclick="this.value=null">
+            <p style="color: #666;">Automatic High-Quality conversion for Second Life.</p>
+            
+            <label for="gifInput" class="custom-file-upload">Select GIF File</label>
+            <input type="file" id="gifInput" accept="image/gif">
 
-                <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
-                <div id="gifStatus" class="status-msg">Waiting for file...</div>
-        
-                <div id="gifInstruction" class="instruction-text"></div>
-                <div id="placeholderContainer">
-                    <img src="bobonchik-spin-sp.gif" alt="Welcome">
-                    <p style="font-size: 0.8em; margin-top: 10px; color: #444;">Ready to create!</p>
-                </div>
-                
-                <canvas id="outputCanvas"></canvas>
-                
-                <div id="gifResultsArea">
-                    <button id="btn1024" class="action-btn">Download<br>1024 x 1024 (HD)</button>
-                    <button id="btnGifReset" class="action-btn" onclick="resetGifTool()">Start Over</button>
-                </div>
+            <div id="gifProgressContainer" class="progress-container"><div id="gifProgressBar" class="progress-bar">0%</div></div>
+            <div id="gifStatus" class="status-msg">Waiting for file...</div>
+    
+            <div id="placeholderContainer">
+                <img src="bobonchik-spin-sp.gif" alt="Welcome">
             </div>
-
-            <div id="tabVideo" class="tab-content" style="display: none;"> 
-                <p style="color: #666; margin-bottom: 30px;">We recommend <strong>EZGIF</strong> for best results.</p>
-                <a href="https://ezgif.com/video-to-gif" target="_blank" class="action-link-btn">OPEN EZGIF CONVERTER</a>
-                <div class="external-instructions">
-                    <h3>Instructions</h3>
-                    <ol>
-                        <li>Upload video to EZGIF.</li>
-                        <li><strong>Important:</strong> Set Frame Rate to <strong>10</strong>.</li>
-                        <li>Use the "Unoptimize" tool if needed.</li>
-                        <li>Download GIF and upload it here.</li>
-                    </ol>
-                </div>
+            
+            <canvas id="outputCanvas"></canvas>
+            
+            <div id="gifResultsArea">
+                <button id="btn1024" class="action-btn">Download HD Texture</button>
+                <button class="action-btn" onclick="location.reload()">Start Over</button>
             </div>
         </div>
     </div>
 
 <script>
-    // --- LÓGICA DE ABAS ---
-    function switchTab(mode) {
-        document.getElementById('tabGif').style.display = (mode === 'gif') ? 'block' : 'none';
-        document.getElementById('tabVideo').style.display = (mode === 'video') ? 'block' : 'none';
-        document.getElementById('tabBtnGif').classList.toggle('active', mode === 'gif');
-        document.getElementById('tabBtnVideo').classList.toggle('active', mode === 'video');
-    }
-
-    // --- SEGURANÇA ---
     const SECRET_KEY = "MMC_SAORI_SECRET_2026";
+    
     function checkAccess() {
         const params = new URLSearchParams(window.location.search);
         const userUUID = params.get('id');
         const urlToken = params.get('token');
         const timestamp = params.get('ts'); 
-        
         if (!userUUID || !urlToken || !timestamp) {
-            if (window.location.protocol === 'file:') { 
+            if (window.location.protocol === 'file:') {
                 document.getElementById('lockedScreen').style.display = 'none';
                 document.getElementById('appContent').style.display = 'flex';
-                return;
             }
-            return; 
+            return;
         }
-
         const calculatedToken = CryptoJS.MD5(userUUID + timestamp + SECRET_KEY + ":0").toString();
         if (urlToken === calculatedToken) {
             document.getElementById('lockedScreen').style.display = 'none';
@@ -168,175 +123,108 @@
     }
     checkAccess();
 
-    // --- LÓGICA DO GIF ---
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
-    const gifInstruction = document.getElementById('gifInstruction');
     const outputCanvas = document.getElementById('outputCanvas');
     const gifResultsArea = document.getElementById('gifResultsArea');
-    const btn1024 = document.getElementById('btn1024');
     const gifProgressContainer = document.getElementById('gifProgressContainer');
     const gifProgressBar = document.getElementById('gifProgressBar');
     const placeholderContainer = document.getElementById('placeholderContainer');
-    let gifData = { cols: 4, rows: 4, fps: 15 };
+    let gifData = { cols: 1, rows: 1, fps: 15 };
 
     gifInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
         
-        resetGifUiState();
         placeholderContainer.style.display = 'none';
-        gifStatus.innerText = "Processing...";
+        outputCanvas.style.display = 'none';
+        gifResultsArea.style.display = 'none';
+        gifStatus.innerText = "Analyzing frames...";
         gifProgressContainer.style.display = 'block';
-        updateGifProgress(10, "Loading...");
         
         const reader = new FileReader();
         reader.onload = function(event) {
-            // 'cumulative: true' é ESSENCIAL para evitar bugs de textura
             gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas', cumulative: true })
-            .then(function (frameData) {
-                updateGifProgress(60, "Optimizing Grid...");
-                setTimeout(() => { processGifData(frameData); }, 100);
-            }).catch(err => {
-                gifStatus.innerText = "Error: " + err;
-                gifProgressContainer.style.display = 'none';
+            .then(function (frames) {
+                processGifData(frames);
             });
         };
         reader.readAsDataURL(file);
     });
 
-    function updateGifProgress(p, t) { 
-        gifProgressBar.style.width = p + '%'; 
-        gifProgressBar.innerText = t;
-    }
+    // Algoritmo de Grade do .exe (Menor desperdício)
+    function getBestGrid(count) {
+        let bestCols = Math.ceil(Math.sqrt(count));
+        let bestRows = Math.ceil(count / bestCols);
+        let minWaste = (bestCols * bestRows) - count;
 
-    // --- ALGORITMO "TIGHTEST FIT" (IGUAL AO PROGRAMA .EXE) ---
-    // Encontra a grade que deixa MENOS espaços vazios
-    function calculateSmartGrid(totalFrames) {
-        let bestCols = Math.ceil(Math.sqrt(totalFrames));
-        let bestRows = Math.ceil(totalFrames / bestCols);
-        let minWasted = (bestCols * bestRows) - totalFrames;
-
-        // Testa combinações para achar a que desperdiça menos
-        // Ex: 13 frames -> 4x4 (16 slots, 3 perdidos) VS 7x2 (14 slots, 1 perdido)
-        // O loop vai preferir 7x2
-        for (let r = 1; r <= totalFrames; r++) {
-            let c = Math.ceil(totalFrames / r);
-            let waste = (c * r) - totalFrames;
-            
-            // Regras para manter a sanidade da textura (evitar 13x1 ou 1x13 se possível)
-            // Mas permitindo distorção se for eficiente
-            if (waste <= minWasted && c <= 16 && r <= 16) {
-                // Se o desperdício for menor, ou igual mas a grade for mais retangular (preferência do .exe)
-                // O .exe prefere preencher a largura
-                if (waste < minWasted || (waste === minWasted && c > bestCols)) {
+        for (let c = 1; c <= count; c++) {
+            let r = Math.ceil(count / c);
+            let waste = (c * r) - count;
+            if (waste < minWaste) {
+                minWaste = waste;
+                bestCols = c;
+                bestRows = r;
+            } else if (waste === minWaste) {
+                // Prefere layouts horizontais (tipo 7x2) como o exe
+                if (c > bestCols) {
                     bestCols = c;
                     bestRows = r;
-                    minWasted = waste;
                 }
             }
         }
-        return { cols: bestCols, rows: bestRows };
+        return { c: bestCols, r: bestRows };
     }
 
     function processGifData(frames) {
-        if (!frames.length) return;
-
-        // 1. CALCULA GRADE OTIMIZADA AUTOMÁTICA
-        const grid = calculateSmartGrid(frames.length);
-        const cols = grid.cols;
-        const rows = grid.rows;
-
-        // 2. RECUPERA FPS
-        const delay = frames[0].frameInfo.delay;
-        const fps = delay > 0 ? Math.round(100 / delay) : 10;
+        const count = frames.length;
+        const grid = getBestGrid(count);
+        const delay = frames[0].frameInfo.delay || 10;
+        const fps = Math.round(100 / delay);
         
-        gifData = { cols, rows, fps };
+        gifData = { cols: grid.c, rows: grid.r, fps: fps };
 
-        // 3. CANVAS HD (1024x1024)
+        // Força 1024x1024 nativo
         outputCanvas.width = 1024;
         outputCanvas.height = 1024;
-        const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
-        
-        // Alta qualidade de resize
+        const ctx = outputCanvas.getContext('2d');
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.clearRect(0, 0, 1024, 1024);
 
-        // Tamanho exato de cada célula (Isso vai esticar a imagem, é o comportamento desejado!)
-        const cellW = 1024 / cols;
-        const cellH = 1024 / rows;
+        const cellW = 1024 / grid.c;
+        const cellH = 1024 / grid.r;
 
-        // 4. DESENHA E ESTICA
         frames.forEach((f, i) => {
-            const x = (i % cols) * cellW;
-            const y = Math.floor(i / cols) * cellH;
-            
-            // Desenha esticado para ocupar 100% da célula
+            const x = (i % grid.c) * cellW;
+            const y = Math.floor(i / grid.c) * cellH;
+            // O segredo do programa: DrawImage ignorando o aspect ratio (STRETCH)
             ctx.drawImage(f.getImage(), 0, 0, f.frameInfo.width, f.frameInfo.height, x, y, cellW, cellH);
         });
 
-        // 5. PREENCHIMENTO AUTOMÁTICO (O tal "+1 frame")
-        // Se a grade tem 14 slots e o GIF tem 13, repete o último frame no slot 14.
-        const totalSlots = cols * rows;
-        if (totalSlots > frames.length) {
-            const lastImg = frames[frames.length-1].getImage();
-            const lastW = frames[frames.length-1].frameInfo.width;
-            const lastH = frames[frames.length-1].frameInfo.height;
-
-            for (let i = frames.length; i < totalSlots; i++) {
-                const x = (i % cols) * cellW;
-                const y = Math.floor(i / cols) * cellH;
-                ctx.drawImage(lastImg, 0, 0, lastW, lastH, x, y, cellW, cellH);
+        // Preenche o resto da grade com o último frame (Clone do comportamento do exe)
+        const totalCells = grid.c * grid.r;
+        if (totalCells > count) {
+            const lastFrame = frames[count - 1];
+            for (let i = count; i < totalCells; i++) {
+                const x = (i % grid.c) * cellW;
+                const y = Math.floor(i / grid.c) * cellH;
+                ctx.drawImage(lastFrame.getImage(), 0, 0, lastFrame.frameInfo.width, lastFrame.frameInfo.height, x, y, cellW, cellH);
             }
         }
 
-        updateGifProgress(100, "Complete!");
+        gifProgressBar.style.width = '100%';
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
-
-        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Frames: ${frames.length} | Grid: ${cols}x${rows}`;
-        const suffix = `_${cols}_${rows}_${fps}`;
         
-        gifInstruction.style.display = 'block';
-        gifInstruction.innerHTML = `
-            File name format: <span class="file-name-style">YOURNAME${suffix}.png</span><br>
-            <span style="font-size: 0.85em; color: #aaa;">
-            NOTE: The texture looks distorted here (Stretched). This is normal.<br>
-            It will look perfect in Second Life when mapped to the prim.
-            </span>
-        `;
-
-        placeholderContainer.style.display = 'none'; 
-        outputCanvas.style.display = 'block'; 
+        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${grid.c}x${grid.r} | Frames: ${count}`;
+        outputCanvas.style.display = 'block';
         gifResultsArea.style.display = 'flex';
-        
-        btn1024.onclick = () => downloadResized(1024);
-    }
 
-    function downloadResized(size) {
-        const link = document.createElement('a');
-        link.download = `MMC_GIF_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
-        outputCanvas.toBlob(function(blob) {
-            const url = URL.createObjectURL(blob);
-            link.href = url;
+        document.getElementById('btn1024').onclick = function() {
+            const link = document.createElement('a');
+            link.download = `MMC_${grid.c}_${grid.r}_${fps}.png`;
+            link.href = outputCanvas.toDataURL("image/png");
             link.click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-        });
-    }
-
-    function resetGifUiState() {
-        gifInstruction.style.display = 'none'; 
-        gifResultsArea.style.display = 'none';
-        outputCanvas.height = 0; outputCanvas.style.display = 'none'; 
-        gifProgressBar.style.width = '0%'; 
-        gifProgressContainer.style.display = 'none';
-    }
-    
-    function resetGifTool() { 
-        resetGifUiState();
-        placeholderContainer.style.display = 'block'; 
-        gifStatus.innerText = "Waiting for file..."; 
-        gifInput.value = ""; 
+        };
     }
 </script>
 </body>
