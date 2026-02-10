@@ -23,7 +23,7 @@
             align-items: center;
         }
 
-        /* --- LOCK SCREEN STYLES --- */
+        /* --- LOCK SCREEN STYLES (COM O GIF) --- */
         #lockedScreen {
             display: flex;
             flex-direction: column;
@@ -33,13 +33,13 @@
             text-align: center;
             color: #d9534f;
         }
-        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        #lockedScreen p { color: #888; font-size: 1.1em; }
-        /* Style for the ERROR GIF */
+        /* Estilo para o GIF de erro */
         .lock-screen-gif {
-            max-width: 150px; /* Adjust size as needed */
+            max-width: 150px; /* Tamanho do GIF */
             margin-bottom: 20px;
         }
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        #lockedScreen p { color: #888; font-size: 1.1em; }
 
         /* --- MAIN APP (Hidden by default) --- */
         #appContent {
@@ -180,6 +180,7 @@
 
     <div id="lockedScreen">
         <img src="ERROR.gif" alt="Error GIF" class="lock-screen-gif">
+        
         <h2>Access Denied</h2>
         <p>You need to use the in-world object to access this tool.</p>
         <p style="font-size: 0.8em; margin-top: 20px; opacity: 0.5;">Error: Invalid Token Signature.</p>
@@ -248,7 +249,7 @@
     // SECURITY CHECK (TOKEN VERIFICATION)
     // ==========================================================
     
-    // 🔴 ESTA SENHA TEM QUE SER A MESMA NO SCRIPT LSL!
+    // ESTA SENHA TEM QUE SER A MESMA DO SCRIPT LSL
     const SECRET_KEY = "MMC_SAORI_SECRET_2026"; 
 
     function checkAccess() {
@@ -261,17 +262,15 @@
             return; // Stay locked
         }
 
-        // 1. Recalculate the Token using the same Secret Key
-        // Logic: MD5( UUID + SECRET )
+        // 1. Recalculate the Token
         const calculatedToken = CryptoJS.MD5(userUUID + SECRET_KEY).toString();
 
-        // 2. Compare calculated token with the one in the URL
+        // 2. Compare
         if (urlToken === calculatedToken) {
-            // SUCCESS: Signature Matches!
+            // SUCCESS: Unlock!
             document.getElementById('lockedScreen').style.display = 'none';
             document.getElementById('appContent').style.display = 'flex';
         } else {
-            // DENIED: Signature Failed (User tried to edit UUID)
             console.log("Access Denied: Invalid Token Signature.");
         }
     }
