@@ -10,7 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- ESTILO GERAL --- */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #111; color: #eee; text-align: center; 
@@ -18,90 +17,136 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- TELA DE BLOQUEIO --- */
+        /* --- LOCK SCREEN --- */
         #lockedScreen {
             display: flex;
             flex-direction: column; justify-content: center; align-items: center;
             height: 80vh; text-align: center; color: #d9534f;
         }
-        .lock-screen-gif { max-width: 150px; margin-bottom: 20px; }
-        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        #lockedScreen p { color: #888; font-size: 1.1em; }
-        #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb; }
+        .lock-screen-gif { max-width: 150px; margin-bottom: 20px;
+        }
+        #lockedScreen h2 { font-size: 2em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;
+        }
+        #lockedScreen p { color: #888; font-size: 1.1em;
+        }
+        #lockReason { font-size: 0.9em; margin-top: 15px; opacity: 0.6; font-family: monospace; color: #bbb;
+        }
 
-        /* --- CONTEÚDO DO APP --- */
-        #appContent { display: none; width: 100%; flex-direction: column; align-items: center; }
+        /* --- APP CONTENT --- */
+        #appContent { display: none;
+            width: 100%; flex-direction: column; align-items: center; }
 
         .main-container { 
-            width: 100%; max-width: 900px; background: #1a1a1a; 
+            width: 100%;
+            max-width: 900px; background: #1a1a1a; 
             padding: 30px; border-radius: 8px; border: 1px solid #333;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-height: 600px;
             margin-bottom: 40px; 
         }
 
-        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #fff; margin-bottom: 10px; }
+        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; text-transform: uppercase;
+            color: #fff; margin-bottom: 10px; }
         
-        .header-credits { font-size: 0.75em; color: #666; margin-bottom: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .header-credits a { color: #fff; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #fff; }
+        .header-credits { font-size: 0.75em;
+            color: #666; margin-bottom: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .header-credits a { color: #fff; font-weight: bold; text-decoration: none;
+            border-bottom: 1px dotted #fff; }
 
-        /* --- ABAS --- */
+        /* TABS */
         .tabs { 
-            display: flex; justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px;
+            display: flex;
+            justify-content: center; border-bottom: 1px solid #333; margin-bottom: 30px;
             position: relative; z-index: 1000;
         }
-        .tab-btn { background: none; border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s; }
-        .tab-btn:hover { color: #fff; }
-        .tab-btn.active { color: #fff; border-bottom: 2px solid #eee; font-weight: bold; }
+        .tab-btn { background: none;
+            border: none; color: #666; padding: 15px 30px; font-size: 16px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: 0.3s;
+        }
+        .tab-btn:hover { color: #fff;
+        }
+        .tab-btn.active { color: #fff;
+            border-bottom: 2px solid #eee; font-weight: bold; }
 
-        .tab-content { display: none; animation: fadeIn 0.5s; } 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .tab-content { display: none;
+            animation: fadeIn 0.5s; } 
+        @keyframes fadeIn { from { opacity: 0;
+            } to { opacity: 1; } }
 
-        /* --- INPUTS DE ARQUIVO (VISUALMENTE ESCONDIDOS MAS CLICÁVEIS) --- */
+        /* UI ELEMENTS */
+        
+        /* CORREÇÃO DO SELECT FILE (Visualmente Oculto em vez de Display None) */
         input[type=file] { 
-            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-            overflow: hidden; clip: rect(0,0,0,0); border: 0; opacity: 0; 
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+            opacity: 0; 
         }
 
-        .custom-file-upload { 
-            border: 1px solid #444; display: inline-block; padding: 12px 24px;
-            cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; 
-            margin: 20px 0; min-width: 250px; transition: 0.3s; position: relative; z-index: 10; 
+        .custom-file-upload { border: 1px solid #444; display: inline-block; padding: 12px 24px;
+            cursor: pointer; background-color: #222; color: #fff; border-radius: 4px; margin: 20px 0; min-width: 250px; transition: 0.3s;
+            position: relative; z-index: 10; 
         }
-        .custom-file-upload:hover { background-color: #333; border-color: #666; }
-
-        /* --- BOTÕES E CONTROLES --- */
-        button.action-btn, .download-link-btn { 
-            background-color: #000; color: white; padding: 15px 0;
-            border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; 
-            text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s;
-            display: inline-block; text-decoration: none; line-height: 1.2;
+        .custom-file-upload:hover { background-color: #333; border-color: #666;
         }
-        button.action-btn:hover:not(:disabled), .download-link-btn:hover { background-color: #fff; color: #000; }
-        button.action-btn:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed; }
 
-        /* --- PROGRESSO E STATUS --- */
-        .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
-        .highlight-success { color: #eee; font-weight: bold; } 
-        .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px; border-radius: 3px; }
-        
-        .progress-container { width: 100%; max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none; }
-        .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px; color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease; }
+        button.action-btn { background-color: #000; color: white; padding: 15px 0;
+            border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s;
+        }
+        button.action-btn:hover:not(:disabled) { background-color: #fff; color: #000;
+        }
+        button.action-btn:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed;
+        }
 
-        .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5; display: none; max-width: 600px; }
+        .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px;
+        }
+        .highlight-success { color: #eee; font-weight: bold;
+        } 
+        .highlight-warning { color: #FFD700; font-weight: bold; font-size: 0.8em;
+        }
+        .file-name-style { color: #fff; font-family: monospace; background: #222; padding: 2px 5px;
+            border-radius: 3px; }
         
-        /* --- RESULTADOS GIF --- */
-        canvas { max-width: 100%; border: 1px solid #333; margin-top: 20px; display: none; background-image: linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%); background-size: 20px 20px; }
-        #gifResultsArea { display: none; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
-        #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
-        #placeholderContainer img { max-width: 150px; }
+        .progress-container { width: 100%;
+            max-width: 600px; background-color: #333; border-radius: 10px; margin: 15px auto; height: 20px; overflow: hidden; display: none;
+        }
+        .progress-bar { height: 100%; width: 0%; background-color: #eee; text-align: center; line-height: 20px;
+            color: #000; font-size: 12px; font-weight: bold; transition: width 0.3s ease;
+        }
+
+        .instruction-text { color: #777; margin: 10px auto; font-size: 0.9em; line-height: 1.5;
+            display: none; max-width: 600px; }
+        canvas { max-width: 100%; border: 1px solid #333;
+            margin-top: 20px; display: none; background-image: linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%);
+            background-size: 20px 20px; }
         
-        /* --- RESULTADOS VIDEO --- */
-        .controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px auto; text-align: left; background: #222; padding: 15px; border-radius: 5px; max-width: 600px; }
-        .control-group label { display: block; color: #888; font-size: 0.8em; margin-bottom: 5px; }
-        .control-group input, .control-group select { width: 90%; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px; }
-        #videoPreviewContainer img { max-width: 100%; border: 1px solid #444; margin-top: 15px; }
+        #gifResultsArea { display: none;
+            margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+        #placeholderContainer { margin-top: 30px; transition: 0.3s;
+        } #placeholderContainer img { max-width: 150px; }
         
-        .result-actions { display: flex; justify-content: center; gap: 15px; margin-top: 20px; align-items: center; flex-wrap: wrap; }
+        .controls-grid { display: grid;
+            grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px auto; text-align: left; background: #222; padding: 15px; border-radius: 5px; max-width: 600px;
+        }
+        .control-group label { display: block; color: #888; font-size: 0.8em; margin-bottom: 5px;
+        }
+        .control-group input, .control-group select { width: 90%; padding: 8px; background: #333;
+            border: 1px solid #444; color: #fff; border-radius: 4px; }
+        #videoPreviewContainer img { max-width: 100%;
+            border: 1px solid #444; margin-top: 15px; }
+        
+        .result-actions { display: flex;
+            justify-content: center; gap: 15px; margin-top: 20px; align-items: center; flex-wrap: wrap;
+        }
+        .download-link-btn { background-color: #000; color: white; padding: 15px 0;
+            border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; text-transform: uppercase; text-decoration: none; display: inline-block; width: 240px; margin: 10px;
+            transition: 0.3s; }
+        .download-link-btn:hover { background-color: #fff; color: #000;
+        }
     </style>
 </head>
 <body>
@@ -127,8 +172,8 @@
                 <button id="tabBtnVideo" class="tab-btn" onclick="switchTab('video')">Video to GIF</button>
             </div>
 
-            <div id="tabGif" class="tab-content" style="display: block;"> 
-                <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
+           
+            <div id="tabGif" class="tab-content" style="display: block;"> <p style="color: #666;">Convert animated GIFs to SL Texture.</p>
                 <label for="gifInput" class="custom-file-upload">Select GIF File</label>
                 <input type="file" id="gifInput" accept="image/gif" onclick="this.value=null">
 
@@ -138,39 +183,41 @@
                 <div id="gifInstruction" class="instruction-text"></div>
                 <div id="placeholderContainer">
                     <img src="bobonchik-spin-sp.gif" alt="Welcome">
-                    <p style="font-size: 0.8em; margin-top: 10px; color: #444;">Ready to create!</p>
+                    <p style="font-size: 0.8em;
+                    margin-top: 10px; color: #444;">Ready to create!</p>
                 </div>
-                
                 <canvas id="outputCanvas"></canvas>
-                
                 <div id="gifResultsArea">
                     <button id="btn1024" class="action-btn">Download<br>1024 x 1024</button>
-                    <button id="btn2048" class="action-btn">Download<br>2048 x 2048</button>
+                    <button 
+                    id="btn2048" class="action-btn">Download<br>2048 x 2048</button>
                     <button id="btnGifReset" class="action-btn" onclick="resetGifTool()">Start Over</button>
                 </div>
             </div>
 
-            <div id="tabVideo" class="tab-content" style="display: none;"> 
-                <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
-                <label for="videoInput" class="custom-file-upload">1. Select Video (MP4)</label>
+            <div id="tabVideo" class="tab-content" style="display: none;"> <p style="color: #666;">Convert MP4 videos to optimized GIFs.</p>
+                <label for="videoInput" class="custom-file-upload">1. Select Video 
+                (MP4)</label>
                 <input type="file" id="videoInput" accept="video/mp4,video/webm,video/ogg" onclick="this.value=null">
                 
                 <div class="controls-grid">
                     <div class="control-group"><label>Start (Sec)</label><input type="number" id="startTime" value="0" min="0" step="0.5"></div>
                     <div class="control-group"><label>Duration (Sec)</label><input type="number" id="duration" value="2" min="0.5" max="10" step="0.5"></div>
+         
                     <div class="control-group">
                         <label>Max Width / Quality</label>
                         <select id="resolution">
                             <option value="300">Small (300px)</option>
+      
                             <option value="600" selected>Medium (600px)</option>
                             <option value="1024">HD (1024px)</option>
                             <option value="original">⚠ ORIGINAL (Heavy)</option>
+              
                         </select>
                     </div>
                 </div>
-                
-                <button id="convertVideoBtn" class="action-btn" style="width: 100%; max-width: 600px;" disabled>2. Convert to GIF</button>
-                
+                <button id="convertVideoBtn" class="action-btn" style="width: 100%;
+                max-width: 600px;" disabled>2. Convert to GIF</button>
                 <div id="videoProgressContainer" class="progress-container"><div id="videoProgressBar" class="progress-bar">0%</div></div>
                 <div id="videoStatus" class="status-msg">Waiting for video...</div>
                 <div id="videoPreviewContainer"></div>
@@ -180,7 +227,7 @@
 
 <script>
     // ==========================================================
-    // 0. LÓGICA DE ABAS (TAB LOGIC)
+    // 0. TAB LOGIC
     // ==========================================================
     function switchTab(mode) {
         const tGif = document.getElementById('tabGif');
@@ -203,8 +250,9 @@
     }
 
     // ==========================================================
-    // 1. SISTEMA DE SEGURANÇA (SECURITY SYSTEM)
+    // 1. SECURITY SYSTEM
     // ==========================================================
+    
     const SECRET_KEY = "MMC_SAORI_SECRET_2026";
     const LINK_EXPIRATION_MINUTES = 2; 
 
@@ -214,10 +262,7 @@
         const urlToken = params.get('token');
         const timestamp = params.get('ts'); 
         const lockReason = document.getElementById('lockReason');
-        
         if (!userUUID || !urlToken || !timestamp) {
-            // Se estiver rodando local sem parametros, permite teste (remover em produção se desejar)
-            if (window.location.protocol === 'file:') return; 
             lockReason.innerText = "Error: Invalid Link Format.";
             return;
         }
@@ -230,12 +275,6 @@
 
         const linkTime = parseInt(timestamp) * 1000;
         const now = new Date().getTime();
-        // Permite uma pequena margem de erro de relógio (ex: 5 minutos no futuro)
-        if (linkTime > now + 300000) {
-             lockReason.innerText = "Error: Invalid Timestamp (Clock skew).";
-             return;
-        }
-        
         const diffMinutes = (now - linkTime) / 1000 / 60;
         if (diffMinutes > LINK_EXPIRATION_MINUTES) {
             lockReason.innerText = "Error: Link expired (Time limit exceeded). Generate a new one.";
@@ -256,7 +295,7 @@
     checkAccess();
 
     // ==========================================================
-    // 2. FERRAMENTA GIF -> TEXTURE
+    // 2. GIF TO TEXTURE LOGIC
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
@@ -274,6 +313,7 @@
         const file = e.target.files[0];
         if (!file) return;
         
+        // UI Reset
         resetGifUiState();
         placeholderContainer.style.display = 'none';
         gifStatus.innerText = "Loading file...";
@@ -283,29 +323,20 @@
         const reader = new FileReader();
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
-            
-            // Try/Catch para capturar GIFs corrompidos
-            try {
-                gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas' })
-                .then(function (frameData) {
-                    updateGifProgress(80, "Drawing texture...");
-                    setTimeout(() => { processGifData(frameData); }, 100);
-                }).catch(err => {
-                    throw new Error(err);
-                });
-            } catch (error) {
-                console.error(error);
-                gifStatus.innerText = "Error: Invalid GIF file.";
+            gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas' })
+            .then(function (frameData) {
+                updateGifProgress(80, "Drawing texture...");
+                setTimeout(() => { processGifData(frameData); }, 100);
+            }).catch(err => {
+                gifStatus.innerText = "Error parsing GIF: " + err;
                 gifProgressContainer.style.display = 'none';
-                placeholderContainer.style.display = 'block';
-            }
+                placeholderContainer.style.display = 'block'; 
+            });
         };
         reader.readAsDataURL(file);
     });
 
-    function updateGifProgress(p, t) { 
-        gifProgressBar.style.width = p + '%'; 
-        gifProgressBar.innerText = t;
+    function updateGifProgress(p, t) { gifProgressBar.style.width = p + '%'; gifProgressBar.innerText = t;
     }
 
     function processGifData(frames) {
@@ -313,28 +344,20 @@
         const w = frames[0].frameInfo.width, h = frames[0].frameInfo.height;
         const len = frames.length, cols = Math.ceil(Math.sqrt(len)), rows = Math.ceil(len / cols);
         const fps = frames[0].frameInfo.delay > 0 ? Math.round(100 / frames[0].frameInfo.delay) : 15;
-        
         gifData = { cols, rows, fps };
-        
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
-        
-        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} | Speed: ${fps} FPS`;
+        gifStatus.innerHTML = `<span class="highlight-success">✔ Ready!</span> Grid: ${cols}x${rows} |
+        Speed: ${fps} FPS`;
         const suffix = `_${cols}_${rows}_${fps}`;
         gifInstruction.style.display = 'block';
         gifInstruction.innerHTML = `File name format: <span class="file-name-style">YOURNAME${suffix}.png</span><br><span style="font-size: 0.85em; opacity: 0.8;">(Keep the numbers at the end for the script).</span>`;
-        
         outputCanvas.width = cols * w; outputCanvas.height = rows * h;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-        
         frames.forEach((f, i) => ctx.drawImage(f.getImage(), (i % cols) * w, Math.floor(i / cols) * h));
-        
-        placeholderContainer.style.display = 'none'; 
-        outputCanvas.style.display = 'block'; 
-        gifResultsArea.style.display = 'flex';
-        
+        placeholderContainer.style.display = 'none'; outputCanvas.style.display = 'block'; gifResultsArea.style.display = 'flex';
         btn1024.onclick = () => downloadResized(1024);
         btn2048.onclick = () => downloadResized(2048);
     }
@@ -342,28 +365,18 @@
     function downloadResized(size) {
         const c = document.createElement('canvas');
         c.width = c.height = size;
-        const ctx = c.getContext('2d'); 
-        ctx.imageSmoothingEnabled = false;
+        const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
         ctx.drawImage(outputCanvas, 0, 0, outputCanvas.width, outputCanvas.height, 0, 0, size, size);
-        
         const link = document.createElement('a');
         link.download = `MMC_GIF_${gifData.cols}_${gifData.rows}_${gifData.fps}.png`;
-        
-        // Blobs são melhores que DataURL para arquivos grandes
-        c.toBlob(function(blob) {
-            const url = URL.createObjectURL(blob);
-            link.href = url;
-            link.click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000); // Limpa memória
-        }, 'image/png');
+        link.href = c.toDataURL("image/png");
+        link.click();
     }
 
     function resetGifUiState() {
-        gifInstruction.style.display = 'none'; 
-        gifResultsArea.style.display = 'none';
+        gifInstruction.style.display = 'none'; gifResultsArea.style.display = 'none';
         outputCanvas.height = 0; outputCanvas.style.display = 'none'; 
-        gifProgressBar.style.width = '0%'; 
-        gifProgressContainer.style.display = 'none';
+        gifProgressBar.style.width = '0%'; gifProgressContainer.style.display = 'none';
     }
     
     function resetGifTool() { 
@@ -374,120 +387,71 @@
     }
 
     // ==========================================================
-    // 3. FERRAMENTA VIDEO -> GIF
+    // 3. VIDEO TOOL LOGIC
     // ==========================================================
-    const videoInput = document.getElementById('videoInput');
-    const convertVideoBtn = document.getElementById('convertVideoBtn');
-    const videoStatus = document.getElementById('videoStatus');
-    const videoPreviewContainer = document.getElementById('videoPreviewContainer');
-    const videoProgressContainer = document.getElementById('videoProgressContainer');
-    const videoProgressBar = document.getElementById('videoProgressBar');
-    
+    const videoInput = document.getElementById('videoInput'), convertVideoBtn = document.getElementById('convertVideoBtn');
+    const videoStatus = document.getElementById('videoStatus'), videoPreviewContainer = document.getElementById('videoPreviewContainer');
+    const videoProgressContainer = document.getElementById('videoProgressContainer'), videoProgressBar = document.getElementById('videoProgressBar');
     let uploadedVideo = null;
-    let tempVideoObjUrl = null; // Armazena URL do vídeo de entrada
-    let currentResultBlobUrl = null; // Armazena URL do GIF de saída
+    let currentVideoBlobUrl = null; // Armazena URL temporaria para limpeza
 
-    // Função utilitária: Converte Base64 para Blob (Resolve problema de string gigante)
+    // FUNCAO AUXILIAR PARA CORRIGIR O ERRO DE "HEAVY ORIGINAL"
+    // Converte a string Base64 gigante em um arquivo Blob leve
     function dataURItoBlob(dataURI) {
-        const byteString = atob(dataURI.split(',')[1]);
-        const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
+        var byteString = atob(dataURI.split(',')[1]);
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
             ia[i] = byteString.charCodeAt(i);
         }
         return new Blob([ab], {type: mimeString});
     }
-
-    // Limpeza de memória crítica
-    function clearVideoMemory() {
-        if (tempVideoObjUrl) { URL.revokeObjectURL(tempVideoObjUrl); tempVideoObjUrl = null; }
-        if (currentResultBlobUrl) { URL.revokeObjectURL(currentResultBlobUrl); currentResultBlobUrl = null; }
-        videoPreviewContainer.innerHTML = "";
-    }
     
     videoInput.addEventListener('change', e => {
-        // Limpa memória anterior assim que o usuário seleciona algo novo
-        clearVideoMemory();
-        
         uploadedVideo = e.target.files[0];
         if (uploadedVideo) { 
             videoStatus.innerText = "Video: " + uploadedVideo.name; 
             convertVideoBtn.disabled = false; 
+            videoPreviewContainer.innerHTML = ""; 
         }
     });
 
     convertVideoBtn.addEventListener('click', () => {
         if (!uploadedVideo) return;
-        
-        convertVideoBtn.disabled = true; 
-        videoStatus.innerText = "Processing..."; 
-        videoProgressContainer.style.display = 'block'; 
-        videoProgressBar.style.width = '0%';
-        
-        const start = parseFloat(document.getElementById('startTime').value);
-        const dur = parseFloat(document.getElementById('duration').value);
-        const resVal = document.getElementById('resolution').value;
-        
-        // Cria URL temporário para o vídeo de entrada
-        const tempVideo = document.createElement('video'); 
-        tempVideoObjUrl = URL.createObjectURL(uploadedVideo);
-        tempVideo.src = tempVideoObjUrl;
+        convertVideoBtn.disabled = true; videoStatus.innerText = "Processing..."; videoPreviewContainer.innerHTML = "";
+        videoProgressContainer.style.display = 'block'; videoProgressBar.style.width = '0%';
+        const start = parseFloat(document.getElementById('startTime').value), dur = parseFloat(document.getElementById('duration').value), resVal = document.getElementById('resolution').value;
+        const tempVideo = document.createElement('video'); tempVideo.src = URL.createObjectURL(uploadedVideo);
         
         tempVideo.onloadedmetadata = function() {
             let finalW, finalH;
+            if (resVal === "original") { finalW = this.videoWidth; finalH = this.videoHeight; }
+            else { const dw = parseInt(resVal); finalW = dw; finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); }
             
-            // Lógica de Redimensionamento
-            if (resVal === "original") { 
-                finalW = this.videoWidth; 
-                finalH = this.videoHeight; 
-            } else { 
-                const dw = parseInt(resVal); 
-                finalW = dw; 
-                finalH = Math.round(dw * (this.videoHeight / this.videoWidth)); 
-            }
-
-            // Otimização de Frames para evitar crash
-            // Se for HD e duração longa, reduzimos levemente o frame rate para poupar memória
-            let interval = 0.1; // Padrão 10 FPS
-            if (finalW >= 1024 && dur > 5) {
-                interval = 0.15; // Reduz para ~7 FPS se for muito pesado
-                console.log("Optimizing frame rate for heavy load");
-            }
-
             gifshot.createGIF({
-                video: [tempVideoObjUrl], 
-                gifWidth: finalW, 
-                gifHeight: finalH, 
-                interval: interval, 
-                numFrames: (dur / interval), 
-                offset: start,
-                progressCallback: p => { 
-                    const pc = Math.round(p * 100);
-                    videoProgressBar.style.width = pc + '%'; 
-                    videoProgressBar.innerText = pc + '%';
+                video: [tempVideo.src], gifWidth: finalW, gifHeight: finalH, interval: 0.1, numFrames: 10 * dur, offset: start,
+                progressCallback: p => { const pc = Math.round(p * 100);
+                videoProgressBar.style.width = pc + '%'; videoProgressBar.innerText = pc + '%';
                 }
             }, obj => {
                 videoProgressContainer.style.display = 'none';
-                
-                if (!obj.error) {
+                if(!obj.error) {
                     videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
                     
-                    // Converte o resultado Base64 em Blob para não travar o botão de download
+                    // --- CORREÇÃO AQUI: Em vez de usar a string gigante, convertemos para BLOB ---
                     const imgBlob = dataURItoBlob(obj.image);
-                    currentResultBlobUrl = URL.createObjectURL(imgBlob);
+                    currentVideoBlobUrl = URL.createObjectURL(imgBlob);
 
-                    // Cria preview
                     const img = document.createElement('img'); 
-                    img.src = currentResultBlobUrl; 
+                    img.src = currentVideoBlobUrl; 
                     videoPreviewContainer.appendChild(img);
 
-                    // Cria botões de ação
-                    const actions = document.createElement('div'); 
-                    actions.className = 'result-actions';
-                    
+                    const actions = document.createElement('div'); actions.className = 'result-actions';
                     const dl = document.createElement('a');
-                    dl.href = currentResultBlobUrl; 
+                    
+                    // Usa o URL curto do blob em vez da string gigante
+                    dl.href = currentVideoBlobUrl; 
                     dl.download = "video.gif"; 
                     dl.innerText = "Download GIF"; 
                     dl.className = "download-link-btn";
@@ -497,27 +461,20 @@
                     rst.className = "action-btn"; 
                     rst.onclick = function() { resetVideoTool(); };
                     
-                    actions.append(dl, rst); 
-                    videoPreviewContainer.append(actions);
-                    
-                } else { 
-                    console.error(obj.errorCode);
-                    videoStatus.innerText = "Error converting video. Try reducing duration or size."; 
-                    convertVideoBtn.disabled = false;
+                    actions.append(dl, rst); videoPreviewContainer.append(actions);
+                } else { videoStatus.innerText = "Error: " + obj.errorCode; convertVideoBtn.disabled = false;
                 }
             });
         };
-        
-        // Error handling para carregamento do vídeo inicial
-        tempVideo.onerror = function() {
-            videoStatus.innerText = "Error: Format not supported by browser.";
-            convertVideoBtn.disabled = false;
-            videoProgressContainer.style.display = 'none';
-        }
     });
 
     function resetVideoTool() {
-        clearVideoMemory();
+        // Limpa memoria do navegador
+        if (currentVideoBlobUrl) {
+            URL.revokeObjectURL(currentVideoBlobUrl);
+            currentVideoBlobUrl = null;
+        }
+        videoPreviewContainer.innerHTML = "";
         videoStatus.innerText = "Waiting for video...";
         videoInput.value = "";
         uploadedVideo = null;
