@@ -270,7 +270,7 @@
     checkAccess();
 
     // ==========================================================
-    // 2. FERRAMENTA GIF -> TEXTURE (MANTIDA IGUAL)
+    // 2. FERRAMENTA GIF -> TEXTURE (COM CORREÇÃO DE OTIMIZAÇÃO)
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
@@ -298,10 +298,12 @@
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
             try {
+                // Solicita os frames como canvas para processamento
                 gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas' })
                 .then(function (frameData) {
-                    updateGifProgress(80, "Drawing texture...");
-                    setTimeout(() => { processGifData(frameData); }, 100);
+                    updateGifProgress(80, "Processing optimized frames...");
+                    // Pequeno delay para a UI atualizar
+                    setTimeout(() => { processGifData(frameData); }, 50);
                 }).catch(err => {
                     throw new Error(err);
                 });
@@ -327,6 +329,43 @@
         const fps = frames[0].frameInfo.delay > 0 ? Math.round(100 / frames[0].frameInfo.delay) : 15;
         
         gifData = { cols, rows, fps };
+        
+        // --- CORREÇÃO PARA GIFS OTIMIZADOS ---
+        // Cria um canvas temporário para "montar" a animação quadro a quadro
+        const compositionCanvas = document.createElement('canvas');
+        compositionCanvas.width = w;
+        compositionCanvas.height = h;
+        const compositionCtx = compositionCanvas.getContext('2d', { willReadFrequently: true });
+        compositionCtx.imageSmoothingEnabled = false;
+
+        // Prepara o canvas de saída final
+        outputCanvas.width = cols * w; outputCanvas.height = rows * h;
+        const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+        frames.forEach((f, i) => {
+            // Lógica básica de descarte (se o quadro anterior mandou limpar, limpa)
+            if (i > 0) {
+                const prevFrameInfo = frames[i-1].frameInfo;
+                // Disposal 2 = Restore to background (clear)
+                if (prevFrameInfo.disposal === 2) {
+                     compositionCtx.clearRect(0, 0, w, h);
+                }
+            }
+            
+            // Desenha o quadro atual (que pode ter transparência) sobre o composto
+            compositionCtx.drawImage(f.getImage(), 0, 0);
+
+            // Calcula posição na grade
+            const x = (i % cols) * w;
+            const y = Math.floor(i / cols) * h;
+
+            // Copia o quadro COMPOSTO para a grade final
+            ctx.drawImage(compositionCanvas, x, y);
+        });
+        // ------------------------------------
+        
         updateGifProgress(100, "Complete!");
         setTimeout(() => { gifProgressContainer.style.display = 'none'; }, 500);
         
@@ -334,12 +373,6 @@
         const suffix = `_${cols}_${rows}_${fps}`;
         gifInstruction.style.display = 'block';
         gifInstruction.innerHTML = `File name format: <span class="file-name-style">YOURNAME${suffix}.png</span><br><span style="font-size: 0.85em; opacity: 0.8;">(Keep the numbers at the end for the script).</span>`;
-        
-        outputCanvas.width = cols * w; outputCanvas.height = rows * h;
-        const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
-        ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-        frames.forEach((f, i) => ctx.drawImage(f.getImage(), (i % cols) * w, Math.floor(i / cols) * h));
         
         placeholderContainer.style.display = 'none'; 
         outputCanvas.style.display = 'block'; 
