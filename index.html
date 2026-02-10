@@ -56,8 +56,7 @@
         .tab-content { display: none; animation: fadeIn 0.5s; } 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- INPUTS DE ARQUIVO (VISUALMENTE ESCONDIDOS MAS CLICÁVEIS) --- */
-        /* CORREÇÃO: Movido para fora da tela (left -9999px) para não cobrir outros botões */
+        /* --- INPUTS DE ARQUIVO --- */
         input[type=file] { 
             position: absolute; left: -9999px; width: 1px; height: 1px; 
             overflow: hidden; opacity: 0; 
@@ -98,7 +97,6 @@
         #placeholderContainer img { max-width: 150px; }
         
         /* --- RESULTADOS VIDEO --- */
-        /* CORREÇÃO: Z-Index alto para garantir que inputs fiquem por cima de tudo */
         .controls-grid { 
             display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px auto; 
             text-align: left; background: #222; padding: 15px; border-radius: 5px; max-width: 600px;
@@ -106,7 +104,6 @@
         }
         .control-group label { display: block; color: #888; font-size: 0.8em; margin-bottom: 5px; }
         
-        /* Inputs e Selects com cursor pointer explícito */
         .control-group input, .control-group select { 
             width: 90%; padding: 8px; background: #333; border: 1px solid #444; 
             color: #fff; border-radius: 4px; cursor: pointer; position: relative; z-index: 201;
@@ -119,7 +116,13 @@
         .heavy-file-icon { font-size: 50px; margin: 20px; color: #4CAF50; }
         .heavy-warning { color: #FFD700; font-size: 0.9em; margin-bottom: 10px; max-width: 500px; margin: 0 auto 10px auto; }
         
-        .video-tip { font-size: 0.8em; color: #666; margin-top: -10px; margin-bottom: 15px; max-width: 600px; }
+        /* CORREÇÃO CSS: Centralização forçada do texto de aviso */
+        .video-tip { 
+            font-size: 0.8em; color: #666; 
+            margin: 10px auto 15px auto; 
+            max-width: 600px; 
+            text-align: center; 
+        }
     </style>
 </head>
 <body>
@@ -181,7 +184,7 @@
                 
                 <div class="controls-grid">
                     <div class="control-group"><label>Start (Sec)</label><input type="number" id="startTime" value="0" min="0" step="0.5"></div>
-                    <div class="control-group"><label>Duration (Sec)</label><input type="number" id="duration" value="2" min="0.5" max="10" step="0.5"></div>
+                    <div class="control-group"><label>Duration (Max 10s)</label><input type="number" id="duration" value="2" min="0.5" max="10" step="0.5"></div>
                     <div class="control-group">
                         <label>Max Width / Quality</label>
                         <select id="resolution">
@@ -391,7 +394,7 @@
     }
 
     // ==========================================================
-    // 3. FERRAMENTA VIDEO -> GIF
+    // 3. FERRAMENTA VIDEO -> GIF (COM CORREÇÕES DE TRAVAMENTO)
     // ==========================================================
     const videoInput = document.getElementById('videoInput');
     const convertVideoBtn = document.getElementById('convertVideoBtn');
@@ -400,19 +403,28 @@
     const videoProgressContainer = document.getElementById('videoProgressContainer');
     const videoProgressBar = document.getElementById('videoProgressBar');
     
+    // --- SAFETY LIMIT ---
+    const MAX_ALLOWED_DURATION = 10; 
+
     let uploadedVideo = null;
     let tempVideoObjUrl = null; 
     let currentResultBlobUrl = null; 
 
     function dataURItoBlob(dataURI) {
-        const byteString = atob(dataURI.split(',')[1]);
-        const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
+        // Bloco seguro: Converte base64 para blob de forma síncrona
+        try {
+            const byteString = atob(dataURI.split(',')[1]);
+            const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], {type: mimeString});
+        } catch (e) {
+            console.error("Blob conversion failed", e);
+            return null;
         }
-        return new Blob([ab], {type: mimeString});
     }
 
     function clearVideoMemory() {
@@ -428,14 +440,21 @@
             videoStatus.innerText = "Video: " + uploadedVideo.name; 
             convertVideoBtn.disabled = false; 
 
-            // CORREÇÃO 1: Lógica para pegar duração original e atualizar o input
             const tempVideo = document.createElement('video');
             tempVideo.preload = 'metadata';
+            
             tempVideo.onloadedmetadata = function() {
-                // Atualiza o campo de duração com o valor real do vídeo
                 const realDuration = this.duration;
+                let setDuration = 2; 
+
                 if(realDuration && !isNaN(realDuration)) {
-                    document.getElementById('duration').value = realDuration.toFixed(1);
+                    if (realDuration > MAX_ALLOWED_DURATION) {
+                        setDuration = MAX_ALLOWED_DURATION;
+                        videoStatus.innerHTML = `Video: ${uploadedVideo.name} <span class="highlight-warning">(Cropped to 10s limit)</span>`;
+                    } else {
+                        setDuration = realDuration;
+                    }
+                    document.getElementById('duration').value = setDuration.toFixed(1);
                 }
                 URL.revokeObjectURL(tempVideo.src);
             };
@@ -452,7 +471,16 @@
         videoProgressBar.style.width = '0%';
         
         const start = parseFloat(document.getElementById('startTime').value);
-        const dur = parseFloat(document.getElementById('duration').value);
+        let dur = parseFloat(document.getElementById('duration').value);
+        
+        if (dur > MAX_ALLOWED_DURATION) {
+            dur = MAX_ALLOWED_DURATION;
+            document.getElementById('duration').value = MAX_ALLOWED_DURATION;
+        }
+        
+        // Garante que duração seja válida para evitar hanging
+        if (!dur || dur <= 0) dur = 2;
+
         const resVal = document.getElementById('resolution').value;
         
         const tempVideo = document.createElement('video'); 
@@ -484,54 +512,67 @@
                 numFrames: (dur / interval), 
                 offset: start,
                 progressCallback: p => { 
-                    const pc = Math.round(p * 100);
+                    // CORREÇÃO: Trava o progresso em 100% visualmente
+                    const pc = Math.min(100, Math.round(p * 100));
                     videoProgressBar.style.width = pc + '%'; 
                     videoProgressBar.innerText = pc + '%';
                 }
             }, obj => {
-                videoProgressContainer.style.display = 'none';
                 
-                if (!obj.error) {
-                    videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
+                // CORREÇÃO: setTimeout permite que a UI atualize antes de travar processando o Blob
+                setTimeout(() => {
+                    videoProgressContainer.style.display = 'none';
                     
-                    const imgBlob = dataURItoBlob(obj.image);
-                    obj.image = null; 
+                    if (!obj.error) {
+                        videoStatus.innerHTML = `<span class="highlight-success">✔ Complete!</span>`;
+                        
+                        const imgBlob = dataURItoBlob(obj.image);
+                        
+                        if (!imgBlob) {
+                            videoStatus.innerText = "Error: Result too large for browser memory.";
+                            convertVideoBtn.disabled = false;
+                            return;
+                        }
 
-                    currentResultBlobUrl = URL.createObjectURL(imgBlob);
+                        // Limpa string gigante
+                        obj.image = null; 
 
-                    if (resVal === "original" || finalW > 800) {
-                        videoPreviewContainer.innerHTML = `
-                            <div class="heavy-file-icon">✅</div>
-                            <div class="heavy-warning">File created! (Preview hidden to prevent lag on heavy files)</div>
-                        `;
-                    } else {
-                        const img = document.createElement('img'); 
-                        img.src = currentResultBlobUrl; 
-                        videoPreviewContainer.appendChild(img);
+                        currentResultBlobUrl = URL.createObjectURL(imgBlob);
+
+                        if (resVal === "original" || finalW > 800) {
+                            videoPreviewContainer.innerHTML = `
+                                <div class="heavy-file-icon">✅</div>
+                                <div class="heavy-warning">File created! (Preview hidden to prevent lag on heavy files)</div>
+                            `;
+                        } else {
+                            const img = document.createElement('img'); 
+                            img.src = currentResultBlobUrl; 
+                            videoPreviewContainer.appendChild(img);
+                        }
+
+                        const actions = document.createElement('div'); 
+                        actions.className = 'result-actions';
+                        
+                        const dl = document.createElement('a');
+                        dl.href = currentResultBlobUrl; 
+                        dl.download = "video.gif"; 
+                        dl.innerText = "Download GIF"; 
+                        dl.className = "download-link-btn";
+                        
+                        const rst = document.createElement('button');
+                        rst.innerText = "Start Over"; 
+                        rst.className = "action-btn"; 
+                        rst.onclick = function() { resetVideoTool(); };
+                        
+                        actions.append(dl, rst); 
+                        videoPreviewContainer.append(actions);
+                        
+                    } else { 
+                        console.error(obj.errorCode);
+                        videoStatus.innerText = "Error: " + obj.errorCode; 
+                        convertVideoBtn.disabled = false;
                     }
-
-                    const actions = document.createElement('div'); 
-                    actions.className = 'result-actions';
-                    
-                    const dl = document.createElement('a');
-                    dl.href = currentResultBlobUrl; 
-                    dl.download = "video.gif"; 
-                    dl.innerText = "Download GIF"; 
-                    dl.className = "download-link-btn";
-                    
-                    const rst = document.createElement('button');
-                    rst.innerText = "Start Over"; 
-                    rst.className = "action-btn"; 
-                    rst.onclick = function() { resetVideoTool(); };
-                    
-                    actions.append(dl, rst); 
-                    videoPreviewContainer.append(actions);
-                    
-                } else { 
-                    console.error(obj.errorCode);
-                    videoStatus.innerText = "Error: " + obj.errorCode; 
-                    convertVideoBtn.disabled = false;
-                }
+                }, 100); // 100ms de atraso para renderizar UI
             });
         };
         
