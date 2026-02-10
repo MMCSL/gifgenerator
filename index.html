@@ -69,28 +69,15 @@
         .custom-file-upload:hover { background-color: #333; border-color: #666; }
 
         /* --- BOTÕES --- */
-        button.action-btn, .external-link-btn { 
+        button.action-btn, .action-link-btn { 
             background-color: #000; color: white; padding: 15px 0;
             border: 1px solid #444; border-radius: 4px; cursor: pointer; font-size: 14px; 
             text-transform: uppercase; width: 240px; margin: 10px; transition: 0.3s;
             display: inline-block; text-decoration: none; line-height: 1.2;
             position: relative; z-index: 50; 
         }
-        button.action-btn:hover, .external-link-btn:hover { background-color: #fff; color: #000; }
+        button.action-btn:hover, .action-link-btn:hover { background-color: #fff; color: #000; }
         
-        .external-link-btn {
-            background-color: #4a90e2; 
-            border-color: #4a90e2;
-            width: auto;
-            padding: 15px 40px;
-            font-weight: bold;
-        }
-        .external-link-btn:hover {
-            background-color: #67aefc;
-            border-color: #67aefc;
-            color: #fff;
-        }
-
         /* --- STATUS E TEXTOS --- */
         .status-msg { margin: 15px 0; color: #888; font-size: 0.9em; min-height: 20px; }
         .highlight-success { color: #eee; font-weight: bold; } 
@@ -107,22 +94,35 @@
         #placeholderContainer { margin-top: 30px; transition: 0.3s; } 
         #placeholderContainer img { max-width: 150px; }
 
-        /* --- INSTRUCOES EXTERNAS --- */
+        /* --- INSTRUCOES EXTERNAS (MINIMALISTA) --- */
         .external-instructions {
             text-align: left;
-            max-width: 550px;
-            margin: 30px auto;
-            background: #222;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #333;
+            max-width: 500px;
+            margin: 40px auto;
+            color: #888; 
         }
-        .external-instructions h3 { margin-top: 0; color: #fff; font-size: 1.1em; }
-        .external-instructions ol { padding-left: 20px; color: #aaa; line-height: 1.6; }
-        .external-instructions li { margin-bottom: 12px; }
-        .external-instructions strong { color: #eee; }
-        .note { font-size: 0.9em; color: #888; border-top: 1px solid #333; padding-top: 10px; margin-top: 15px; }
-        .warning-text { color: #e6b800; font-weight: bold; }
+        .external-instructions h3 { 
+            margin-top: 0; color: #fff; font-size: 0.9em; 
+            text-transform: uppercase; letter-spacing: 1px; 
+            text-align: center; margin-bottom: 20px;
+            font-weight: 300;
+        }
+        .external-instructions ol { 
+            padding-left: 20px; line-height: 1.8; font-size: 0.95em;
+        }
+        .external-instructions li { 
+            margin-bottom: 15px; 
+            border-bottom: 1px solid #222; 
+            padding-bottom: 5px;
+        }
+        .external-instructions li:last-child { border-bottom: none; }
+        
+        .external-instructions strong { color: #ccc; font-weight: normal; border-bottom: 1px dotted #666; }
+        
+        .note { 
+            font-size: 0.85em; color: #555; 
+            margin-top: 25px; text-align: center; font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -172,26 +172,24 @@
             </div>
 
             <div id="tabVideo" class="tab-content" style="display: none;"> 
-                <p style="color: #888; margin-bottom: 30px;">
+                <p style="color: #666; margin-bottom: 30px;">
                     We recommend <strong>EZGIF</strong> to create glitch-free GIFs.
                 </p>
                 
-                <a href="https://ezgif.com/video-to-gif" target="_blank" class="external-link-btn">
-                    OPEN EZGIF CONVERTER ➔
+                <a href="https://ezgif.com/video-to-gif" target="_blank" class="action-link-btn">
+                    OPEN EZGIF CONVERTER
                 </a>
 
                 <div class="external-instructions">
-                    <h3>How to make it work (No bugs):</h3>
+                    <h3>Quick Guide</h3>
                     <ol>
-                        <li>Click the blue button to open EZGIF.</li>
-                        <li>Upload your video and convert it.</li>
-                        <li><strong>IMPORTANT:</strong> If the texture looks weird or transparent in SL:
-                            <br>Look for the <strong>"Optimize"</strong> tool on EZGIF, and select <strong>"Unoptimize"</strong> (or 'Coalesce').
-                        </li>
-                        <li>Download the final GIF and upload it here in the <strong>"GIF to Texture"</strong> tab.</li>
+                        <li>Upload your video on EZGIF.</li>
+                        <li><strong>IMPORTANT:</strong> If you use other tools, make sure the GIF is "Unoptimized" (no transparency).</li>
+                        <li>Download the final GIF.</li>
+                        <li>Upload it here in the <strong>"GIF to Texture"</strong> tab.</li>
                     </ol>
                     <div class="note">
-                        <span class="warning-text">Why unoptimize?</span> Scripts in SL work better with "Unoptimized" GIFs because they contain the full image in every frame, preventing the "ghosting" effect.
+                        This tool now automatically fixes transparency issues for most GIFs.
                     </div>
                 </div>
             </div>
@@ -275,7 +273,7 @@
     checkAccess();
 
     // ==========================================================
-    // 2. FERRAMENTA GIF -> TEXTURE (CÓDIGO CLÁSSICO - ESTÁVEL)
+    // 2. FERRAMENTA GIF -> TEXTURE (COM CORREÇÃO DE BUG DE TEXTURA)
     // ==========================================================
     const gifInput = document.getElementById('gifInput');
     const gifStatus = document.getElementById('gifStatus');
@@ -302,10 +300,15 @@
         const reader = new FileReader();
         reader.onload = function(event) {
             updateGifProgress(50, "Parsing frames...");
-            
-            // Usando o método clássico e simples que funciona com GIFs unoptimized
             try {
-                gifFrames({ url: event.target.result, frames: 'all', outputType: 'canvas' })
+                // CORREÇÃO CRÍTICA AQUI: 'cumulative: true'
+                // Isso força a biblioteca a montar o quadro completo, eliminando transparências quebradas.
+                gifFrames({ 
+                    url: event.target.result, 
+                    frames: 'all', 
+                    outputType: 'canvas',
+                    cumulative: true 
+                })
                 .then(function (frameData) {
                     updateGifProgress(80, "Drawing texture...");
                     setTimeout(() => { processGifData(frameData); }, 100);
@@ -335,9 +338,6 @@
         
         gifData = { cols, rows, fps };
         
-        // --- LOOP SIMPLES (CLÁSSICO) ---
-        // Este loop assume que o GIF já está "Unoptimized" (cada frame é completo).
-        // Isso evita bugs de processamento no navegador.
         outputCanvas.width = cols * w; outputCanvas.height = rows * h;
         const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
         ctx.imageSmoothingEnabled = false;
@@ -346,6 +346,7 @@
         frames.forEach((f, i) => {
             const x = (i % cols) * w;
             const y = Math.floor(i / cols) * h;
+            // Como cumulative: true está ativado, f.getImage() já retorna o quadro completo pintado
             ctx.drawImage(f.getImage(), x, y);
         });
         
